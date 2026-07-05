@@ -5,7 +5,9 @@
   ============================================================================
   ■ 目的
     採用選考の場で応募者に受けてもらう参考ツール。合否判定には使わない。
-    回答はブラウザのメモリ上のみで処理し、外部送信・保存は一切行わない。
+    回答はブラウザ内のみで処理し、外部送信は一切行わない。
+    （リロード事故対策として回答中のみ sessionStorage に一時保存し、
+      結果表示の時点で自動削除する。キーは STORAGE_KEY を参照）
 
   ■ 編集ガイド（カスタマイズしたい場合はここを編集）
     1. スコア合成比率・下限:
@@ -49,331 +51,564 @@
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
+<!-- Webフォント: 見出し=DotGothic16(ピクセル) / 本文=Noto Sans JP / 英字数字=Press Start 2P(8bit) -->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=DotGothic16&family=Noto+Sans+JP:wght@400;500;700&family=Press+Start+2P&display=swap" rel="stylesheet" />
+
 <style>
-  /* ===== デザイントークン: ネイビー基調＋銅色アクセント ===== */
+  /* ===== デザイントークン: くにおくん風レトロゲームUI =====
+     明るいミント緑の背景＋RPGウィンドウ風の白カード（黒枠・ハードシャドウ）
+     見出し=DotGothic16 / 英字・数字アクセント=Press Start 2P */
   :root {
-    --navy: #16324f;
-    --navy-dark: #0e2438;
-    --navy-light: #2c5578;
-    --accent: #c07b3a;      /* 銅色アクセント */
-    --accent-soft: #f4e6d6;
-    --bg: #f5f7f9;
+    --ink: #1c1c1c;          /* 黒枠・文字のベース */
+    --red: #e60012;          /* ファミコン赤（プライマリ） */
+    --red-dark: #b3000e;
+    --blue: #29abe2;         /* スカイブルー */
+    --yellow: #ffd400;       /* コイン黄 */
+    --select: #fff3b0;       /* 選択中ハイライト（RPGメニュー風） */
+    --green: #43b047;        /* 草原グリーン */
+    --bg: #3ed0bd;           /* ミント緑の背景 */
+    --sky: #a9e0f7;          /* ステージの空 */
+    --dirt: #8a5a33;         /* 地面の土 */
     --card: #ffffff;
-    --text: #24313d;
-    --text-sub: #5a6b7a;
-    --line: #dde4ea;
-    --green: #2e7d5b;
-    --radius: 14px;
+    --text: #222222;
+    --text-sub: #5b6770;
+    --line: #d9dee3;
+    --radius: 10px;
+    --font-pixel: "DotGothic16", "Noto Sans JP", monospace;
+    --font-8bit: "Press Start 2P", "DotGothic16", monospace;
+    --shadow-hard: 6px 6px 0 rgba(28, 28, 28, 0.75);
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html { -webkit-text-size-adjust: 100%; }
   body {
-    font-family: system-ui, -apple-system, "Hiragino Kaku Gothic ProN",
-                 "Noto Sans JP", "Yu Gothic UI", Meiryo, sans-serif;
-    background: var(--bg);
+    font-family: "Noto Sans JP", system-ui, -apple-system, "Hiragino Kaku Gothic ProN",
+                 "Yu Gothic UI", Meiryo, sans-serif;
+    /* 斜めウォーターマーク＋うっすら走査線＋ミント緑 */
+    background-image:
+      repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.025) 0 2px, transparent 2px 4px),
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='380' height='280'%3E%3Cg fill='rgba(255,255,255,0.09)' font-family='Arial Black,Arial,sans-serif' font-size='26' font-weight='900'%3E%3Ctext x='190' y='100' text-anchor='middle' transform='rotate(-16 190 100)'%3ESANJO KOMUTEN!%3C/text%3E%3Ctext x='30' y='240' text-anchor='middle' transform='rotate(-16 30 240)'%3ESANJO!%3C/text%3E%3C/g%3E%3C/svg%3E");
+    background-color: var(--bg);
     color: var(--text);
     line-height: 1.75;
     font-size: 16px;
   }
   #root { min-height: 100vh; display: flex; flex-direction: column; }
+  button:focus-visible { outline: 3px solid var(--yellow); outline-offset: 2px; }
 
-  /* ===== 共通レイアウト ===== */
+  /* ===== ヘッダー: タイトルウィンドウ風 ===== */
   .app-header {
-    background: var(--navy);
-    color: #fff;
-    padding: 14px 20px;
+    background: transparent;
     text-align: center;
+    padding: 22px 16px 6px;
   }
-  .app-header .brand { font-size: 13px; letter-spacing: 0.12em; opacity: 0.85; }
-  .app-header .title { font-size: 17px; font-weight: 700; }
+  .header-box {
+    display: inline-block;
+    background: var(--card);
+    border: 3px solid var(--ink);
+    border-radius: var(--radius);
+    box-shadow: 5px 5px 0 rgba(28, 28, 28, 0.75);
+    padding: 10px 26px 12px;
+  }
+  .app-header .brand {
+    font-family: var(--font-8bit);
+    font-size: 9px;
+    letter-spacing: 0.22em;
+    color: var(--red);
+    margin-bottom: 4px;
+  }
+  .app-header .title {
+    font-family: var(--font-pixel);
+    font-size: 18px;
+    font-weight: 400;
+    color: var(--ink);
+    line-height: 1.4;
+  }
+  @media (max-width: 480px) { .app-header .title { font-size: 15.5px; } }
+
   .container {
     width: 100%;
     max-width: 720px;
     margin: 0 auto;
-    padding: 24px 16px 56px;
+    padding: 24px 16px 48px;
     flex: 1;
   }
+
+  /* ===== カード: RPGダイアログウィンドウ風 ===== */
   .card {
     background: var(--card);
+    border: 3px solid var(--ink);
     border-radius: var(--radius);
-    box-shadow: 0 2px 12px rgba(22, 50, 79, 0.08);
-    padding: 28px 24px;
-    margin-bottom: 20px;
+    box-shadow: var(--shadow-hard);
+    padding: 30px 26px;
+    margin-bottom: 26px;
   }
-  @media (max-width: 480px) { .card { padding: 22px 16px; } }
+  @media (max-width: 480px) { .card { padding: 24px 16px; } }
 
-  /* 画面切替アニメーション */
-  .screen { animation: fadeUp 0.35s ease both; }
+  /* 画面切替アニメーション（カードごとに時間差で立ち上がる） */
+  .screen > * { animation: fadeUp 0.5s cubic-bezier(0.22, 1, 0.36, 1) both; }
+  .screen > *:nth-child(2) { animation-delay: 0.08s; }
+  .screen > *:nth-child(3) { animation-delay: 0.16s; }
+  .screen > *:nth-child(4) { animation-delay: 0.24s; }
+  .screen > *:nth-child(5) { animation-delay: 0.32s; }
+  .screen > *:nth-child(6) { animation-delay: 0.40s; }
+  .screen > *:nth-child(7) { animation-delay: 0.48s; }
   @keyframes fadeUp {
-    from { opacity: 0; transform: translateY(12px); }
+    from { opacity: 0; transform: translateY(16px); }
     to   { opacity: 1; transform: none; }
   }
 
-  h1 { font-size: 24px; color: var(--navy); line-height: 1.4; margin-bottom: 12px; }
-  h2 { font-size: 19px; color: var(--navy); margin-bottom: 10px; }
-  h3 { font-size: 16px; color: var(--navy); margin-bottom: 6px; }
+  h1 {
+    font-family: var(--font-pixel);
+    font-size: 28px; font-weight: 400;
+    color: var(--ink); line-height: 1.45;
+    margin-bottom: 12px;
+  }
+  h2 {
+    font-family: var(--font-pixel);
+    font-size: 21px; font-weight: 400;
+    color: var(--ink);
+    margin-bottom: 12px;
+    position: relative; padding-left: 22px;
+  }
+  h2::before {
+    content: "";
+    position: absolute; left: 0; top: 0.42em;
+    width: 12px; height: 12px;
+    background: var(--red);
+    border: 2px solid var(--ink);
+  }
+  h3 { font-family: var(--font-pixel); font-size: 16.5px; font-weight: 400; color: var(--ink); margin-bottom: 6px; }
   p.sub { color: var(--text-sub); font-size: 14.5px; }
 
-  /* ===== ボタン ===== */
+  /* ===== ボタン: ハードシャドウのブロック風 ===== */
   .btn {
     display: inline-block;
-    font-family: inherit;
-    font-size: 16px;
-    font-weight: 700;
-    padding: 14px 28px;
+    font-family: var(--font-pixel);
+    font-size: 16.5px;
+    font-weight: 400;
+    padding: 13px 26px;
     min-height: 50px;
-    border: none;
-    border-radius: 10px;
+    border: 3px solid var(--ink);
+    border-radius: 8px;
     cursor: pointer;
-    transition: transform 0.12s ease, box-shadow 0.12s ease, opacity 0.12s;
+    background: #fff;
+    color: var(--ink);
+    box-shadow: 4px 4px 0 var(--ink);
+    transition: transform 0.08s ease, box-shadow 0.08s ease, opacity 0.15s, background 0.15s;
   }
-  .btn:active { transform: scale(0.97); }
-  .btn-primary { background: var(--accent); color: #fff; box-shadow: 0 3px 10px rgba(192,123,58,0.35); }
-  .btn-primary:hover { box-shadow: 0 5px 16px rgba(192,123,58,0.45); }
-  .btn-primary:disabled { opacity: 0.35; cursor: not-allowed; box-shadow: none; }
-  .btn-ghost { background: transparent; color: var(--navy-light); border: 1.5px solid var(--line); }
-  .btn-ghost:hover { border-color: var(--navy-light); }
+  .btn:hover:not(:disabled) { transform: translate(-1px, -1px); box-shadow: 5px 5px 0 var(--ink); }
+  .btn:active:not(:disabled) { transform: translate(3px, 3px); box-shadow: 1px 1px 0 var(--ink); }
+  .btn-primary { background: var(--red); color: #fff; }
+  .btn-primary:hover:not(:disabled) { background: #f5222d; }
+  .btn-primary:disabled { opacity: 0.35; cursor: not-allowed; box-shadow: 4px 4px 0 rgba(28,28,28,0.4); }
+  .btn-ghost { background: #fff; color: var(--ink); }
+  .btn-ghost:hover { background: var(--select); }
   .btn-wide { width: 100%; }
 
-  /* ===== トップ画面 ===== */
+  /* ===== トップ画面: キャラが並ぶゲームステージ ===== */
+  .hero-sprites {
+    position: relative;
+    display: flex; justify-content: center; align-items: flex-end;
+    gap: 20px;
+    padding: 26px 12px 30px;
+    margin-bottom: 20px;
+    border: 3px solid var(--ink);
+    border-radius: 8px;
+    overflow: hidden;
+    /* ドット絵風の空: ハードエッジの雲 */
+    background:
+      radial-gradient(circle at 18% 30%, #ffffff 0 11px, transparent 12px),
+      radial-gradient(circle at 26% 26%, #ffffff 0 14px, transparent 15px),
+      radial-gradient(circle at 33% 32%, #ffffff 0 10px, transparent 11px),
+      radial-gradient(circle at 74% 18%, #ffffff 0 9px, transparent 10px),
+      radial-gradient(circle at 81% 15%, #ffffff 0 12px, transparent 13px),
+      radial-gradient(circle at 88% 20%, #ffffff 0 8px, transparent 9px),
+      linear-gradient(var(--sky), #cdeefc);
+  }
+  .hero-sprites::after {
+    content: "";
+    position: absolute; left: 0; right: 0; bottom: 0;
+    height: 20px;
+    border-top: 3px solid var(--ink);
+    background: linear-gradient(var(--green) 0 9px, #2e8b33 9px 12px, var(--dirt) 12px);
+  }
+  .hero-sprite {
+    position: relative; z-index: 1;
+    margin-bottom: 14px;
+    animation: bob 0.9s steps(2) infinite;
+  }
+  @keyframes bob {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-4px); }
+  }
+  @media (max-width: 480px) {
+    .hero-sprites { gap: 10px; }
+    .hero-sprite:nth-child(6) { display: none; }
+  }
   .hero-badge {
     display: inline-block;
-    background: var(--accent-soft);
-    color: var(--accent);
+    background: var(--red);
+    color: #fff;
+    font-family: var(--font-pixel);
     font-size: 13px;
-    font-weight: 700;
     padding: 4px 14px;
-    border-radius: 999px;
+    border: 2px solid var(--ink);
+    border-radius: 6px;
+    box-shadow: 3px 3px 0 rgba(28, 28, 28, 0.75);
     margin-bottom: 14px;
   }
   .info-list { list-style: none; margin: 18px 0; }
   .info-list li {
-    padding: 10px 0 10px 30px;
+    padding: 10px 0 10px 28px;
     position: relative;
-    border-bottom: 1px dashed var(--line);
+    border-bottom: 2px dashed var(--line);
     font-size: 15px;
   }
   .info-list li::before {
-    content: "✓";
-    position: absolute; left: 4px;
-    color: var(--green); font-weight: 700;
+    content: "▶";
+    position: absolute; left: 2px; top: 10px;
+    color: var(--red);
+    font-size: 13px;
   }
   .notice-box {
-    background: #fdf7ef;
-    border: 1px solid #ecd9bf;
-    border-radius: 10px;
+    background: #fff8e1;
+    border: 2px solid var(--ink);
+    border-radius: 8px;
     padding: 14px 16px;
     font-size: 13.5px;
-    color: #6b5638;
+    color: #5c4a1e;
     margin: 16px 0 22px;
   }
 
   /* ===== タイプ選択画面 ===== */
-  .mode-tabs { display: flex; gap: 8px; margin-bottom: 20px; }
+  .mode-tabs {
+    display: flex; gap: 10px;
+    margin-bottom: 22px;
+  }
   .mode-tab {
     flex: 1;
-    font-family: inherit;
-    font-size: 14px; font-weight: 700;
-    padding: 12px 6px;
-    border-radius: 10px;
-    border: 1.5px solid var(--line);
-    background: #fff; color: var(--text-sub);
+    font-family: var(--font-pixel);
+    font-size: 15px;
+    padding: 11px 6px;
+    border: 3px solid var(--ink);
+    border-radius: 8px;
+    background: #fff;
+    color: var(--text-sub);
     cursor: pointer;
-    transition: all 0.15s;
+    box-shadow: 3px 3px 0 rgba(28, 28, 28, 0.75);
+    transition: all 0.1s;
   }
-  .mode-tab.active { background: var(--navy); border-color: var(--navy); color: #fff; }
+  .mode-tab:hover { background: var(--select); color: var(--ink); }
+  .mode-tab.active {
+    background: var(--red); color: #fff;
+    transform: translate(2px, 2px);
+    box-shadow: 1px 1px 0 rgba(28, 28, 28, 0.75);
+  }
 
   .axis-block { margin-bottom: 18px; }
-  .axis-label { font-size: 13px; font-weight: 700; color: var(--text-sub); margin-bottom: 6px; }
+  .axis-label { font-family: var(--font-pixel); font-size: 14px; color: var(--text-sub); margin-bottom: 6px; }
   .axis-pair { display: flex; gap: 10px; }
   .axis-option {
     flex: 1;
     font-family: inherit;
     text-align: left;
     padding: 12px 14px;
-    border-radius: 10px;
-    border: 1.5px solid var(--line);
+    border-radius: 8px;
+    border: 2.5px solid var(--ink);
     background: #fff;
     cursor: pointer;
-    transition: all 0.15s;
+    box-shadow: 3px 3px 0 rgba(28, 28, 28, 0.5);
+    transition: all 0.1s;
   }
-  .axis-option:hover { border-color: var(--navy-light); }
-  .axis-option.selected { border-color: var(--accent); background: var(--accent-soft); }
-  .axis-option .letter { font-size: 18px; font-weight: 800; color: var(--navy); }
+  .axis-option:hover { background: #fffbe8; transform: translate(-1px, -1px); box-shadow: 4px 4px 0 rgba(28, 28, 28, 0.5); }
+  .axis-option.selected {
+    background: var(--select);
+    transform: translate(2px, 2px);
+    box-shadow: 1px 1px 0 rgba(28, 28, 28, 0.5);
+  }
+  .axis-option .letter { font-family: var(--font-8bit); font-size: 15px; color: var(--red); }
   .axis-option .desc { font-size: 12.5px; color: var(--text-sub); line-height: 1.5; }
 
   .type-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 10px;
+    gap: 12px;
   }
   @media (max-width: 560px) { .type-grid { grid-template-columns: repeat(2, 1fr); } }
   .type-cell {
     font-family: inherit;
     padding: 12px 8px 10px;
-    border-radius: 10px;
-    border: 1.5px solid var(--line);
+    border-radius: 8px;
+    border: 2.5px solid var(--ink);
     background: #fff;
     cursor: pointer;
     text-align: center;
-    transition: all 0.15s;
+    box-shadow: 3px 3px 0 rgba(28, 28, 28, 0.5);
+    transition: all 0.1s;
     min-height: 74px;
   }
-  .type-cell:hover { border-color: var(--navy-light); transform: translateY(-2px); }
-  .type-cell.selected { border-color: var(--accent); background: var(--accent-soft); }
-  .type-cell .code { font-size: 17px; font-weight: 800; color: var(--navy); letter-spacing: 0.05em; }
-  .type-cell .name { font-size: 11.5px; color: var(--text-sub); line-height: 1.45; display: block; margin-top: 2px; }
+  .type-cell:hover { background: #fffbe8; transform: translate(-1px, -1px); box-shadow: 4px 4px 0 rgba(28, 28, 28, 0.5); }
+  .type-cell.selected {
+    background: var(--select);
+    transform: translate(2px, 2px);
+    box-shadow: 1px 1px 0 rgba(28, 28, 28, 0.5);
+  }
+  .type-cell .code { font-family: var(--font-8bit); font-size: 13px; color: var(--red); letter-spacing: 0.04em; }
+  .type-cell .name { font-size: 11.5px; color: var(--text-sub); line-height: 1.45; display: block; margin-top: 4px; }
 
   .selected-type-bar {
     display: flex; align-items: center; justify-content: space-between;
-    background: var(--navy); color: #fff;
-    border-radius: 10px;
+    gap: 12px;
+    background: var(--ink);
+    color: #fff;
+    border-radius: 8px;
+    border: 3px solid var(--ink);
+    box-shadow: inset 0 0 0 2px #fff, 5px 5px 0 rgba(28, 28, 28, 0.5);
     padding: 14px 18px;
-    margin-top: 20px;
+    margin-top: 22px;
   }
-  .selected-type-bar .code { font-size: 22px; font-weight: 800; letter-spacing: 0.08em; }
-  .selected-type-bar .name { font-size: 13px; opacity: 0.85; }
+  .selected-type-bar .code { font-family: var(--font-8bit); font-size: 17px; letter-spacing: 0.08em; }
+  .selected-type-bar .name { font-family: var(--font-pixel); font-size: 13px; opacity: 0.9; }
+  .selected-type-bar .btn { box-shadow: 3px 3px 0 rgba(255, 255, 255, 0.55); }
 
   /* ===== 質問画面 ===== */
   .progress-wrap { margin-bottom: 22px; }
   .progress-meta {
     display: flex; justify-content: space-between;
-    font-size: 13px; color: var(--text-sub); font-weight: 700;
+    font-family: var(--font-pixel);
+    font-size: 14px; color: var(--text-sub);
     margin-bottom: 6px;
   }
+  /* HPゲージ風プログレスバー */
   .progress-track {
-    height: 8px; background: var(--line);
-    border-radius: 999px; overflow: hidden;
+    height: 16px;
+    background: #fff;
+    border: 3px solid var(--ink);
+    border-radius: 6px;
+    overflow: hidden;
   }
   .progress-fill {
+    position: relative;
     height: 100%;
-    background: linear-gradient(90deg, var(--navy-light), var(--accent));
-    border-radius: 999px;
-    transition: width 0.3s ease;
+    background:
+      repeating-linear-gradient(90deg, transparent 0 8px, rgba(255, 255, 255, 0.28) 8px 10px),
+      linear-gradient(#5ecb62 0 45%, var(--green) 45%);
+    transition: width 0.35s steps(6);
   }
+
+  /* 設問の切替アニメーション（key=設問番号で再発火） */
+  .q-anim { animation: qIn 0.25s steps(3) both; }
+  @keyframes qIn {
+    from { opacity: 0; transform: translateX(14px); }
+    to   { opacity: 1; transform: none; }
+  }
+
   .q-category {
     display: inline-block;
-    font-size: 12px; font-weight: 700;
-    color: var(--navy-light);
-    background: #e8eef4;
-    padding: 3px 12px;
-    border-radius: 999px;
+    font-family: var(--font-pixel);
+    font-size: 12.5px;
+    color: var(--red);
+    background: #fff;
+    border: 2px solid var(--red);
+    padding: 2px 12px;
+    border-radius: 6px;
     margin-bottom: 12px;
   }
   .q-text { font-size: 18px; font-weight: 700; line-height: 1.7; margin-bottom: 24px; min-height: 3.4em; }
   @media (max-width: 480px) { .q-text { font-size: 16.5px; } }
 
+  /* RPGメニュー風の選択肢 */
   .likert { display: flex; flex-direction: column; gap: 10px; }
   .likert-option {
     font-family: inherit;
     display: flex; align-items: center; gap: 14px;
     width: 100%;
-    padding: 13px 16px;
+    padding: 12px 16px;
     min-height: 52px;
-    border-radius: 10px;
-    border: 1.5px solid var(--line);
+    border-radius: 8px;
+    border: 2.5px solid var(--ink);
     background: #fff;
     font-size: 15px;
     cursor: pointer;
-    transition: all 0.15s;
+    box-shadow: 3px 3px 0 rgba(28, 28, 28, 0.5);
+    transition: all 0.1s;
     text-align: left;
   }
-  .likert-option:hover { border-color: var(--navy-light); background: #f7fafc; }
-  .likert-option.selected { border-color: var(--accent); background: var(--accent-soft); font-weight: 700; }
+  .likert-option:hover { background: #fffbe8; transform: translateX(4px); }
+  .likert-option.selected {
+    background: var(--select);
+    font-weight: 700;
+    transform: translate(2px, 2px);
+    box-shadow: 1px 1px 0 rgba(28, 28, 28, 0.5);
+  }
   .likert-option .num {
     flex-shrink: 0;
     width: 30px; height: 30px;
-    border-radius: 50%;
+    border-radius: 6px;
+    border: 2px solid var(--ink);
     display: flex; align-items: center; justify-content: center;
-    background: var(--line); color: var(--text-sub);
-    font-weight: 800; font-size: 14px;
+    background: #fff; color: var(--ink);
+    font-family: var(--font-8bit);
+    font-size: 12px;
+    transition: all 0.1s;
   }
-  .likert-option.selected .num { background: var(--accent); color: #fff; }
+  .likert-option.selected .num { background: var(--red); border-color: var(--ink); color: #fff; }
+
+  .kbd-hint { margin-top: 14px; font-size: 12px; color: var(--text-sub); text-align: center; }
+  .kbd-hint kbd {
+    display: inline-block;
+    min-width: 20px;
+    padding: 1px 5px;
+    border: 2px solid var(--ink);
+    border-bottom-width: 3px;
+    border-radius: 4px;
+    background: #fff;
+    font-family: var(--font-8bit);
+    font-size: 9px;
+    text-align: center;
+  }
+  @media (hover: none) { .kbd-hint { display: none; } } /* タッチ端末では非表示 */
 
   .quiz-nav { display: flex; gap: 12px; margin-top: 24px; }
   .quiz-nav .btn { flex: 1; }
   .unanswered-note {
     margin-top: 16px;
-    background: #fdf7ef;
-    border: 1px solid #ecd9bf;
-    border-radius: 10px;
+    background: #fff8e1;
+    border: 2px solid var(--ink);
+    border-radius: 8px;
     padding: 14px 16px;
     font-size: 13.5px;
-    color: #6b5638;
+    color: #5c4a1e;
     line-height: 1.7;
   }
 
-  /* ===== 結果画面: キャラクター表示 ===== */
+  /* ===== 結果画面: キャラクター表示（ゲームステージ風の額縁） ===== */
   .char-hero {
     text-align: center;
     padding: 10px 0 18px;
-    border-bottom: 1px dashed var(--line);
+    border-bottom: 2px dashed var(--line);
     margin-bottom: 16px;
   }
-  .char-hero svg { animation: charPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+  .char-frame {
+    position: relative;
+    display: inline-flex;
+    padding: 26px 40px 34px;
+    border: 3px solid var(--ink);
+    border-radius: 8px;
+    overflow: hidden;
+    background:
+      radial-gradient(circle at 22% 26%, #ffffff 0 10px, transparent 11px),
+      radial-gradient(circle at 30% 22%, #ffffff 0 13px, transparent 14px),
+      radial-gradient(circle at 78% 16%, #ffffff 0 9px, transparent 10px),
+      radial-gradient(circle at 85% 21%, #ffffff 0 11px, transparent 12px),
+      linear-gradient(var(--sky), #cdeefc);
+    box-shadow: 5px 5px 0 rgba(28, 28, 28, 0.75);
+    animation: charPop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  }
+  .char-frame::after {
+    content: "";
+    position: absolute; left: 0; right: 0; bottom: 0;
+    height: 22px;
+    border-top: 3px solid var(--ink);
+    background: linear-gradient(var(--green) 0 10px, #2e8b33 10px 13px, var(--dirt) 13px);
+  }
+  .char-frame svg { position: relative; z-index: 1; }
   @keyframes charPop {
     from { opacity: 0; transform: scale(0.4); }
     to   { opacity: 1; transform: scale(1); }
   }
-  .char-lead { font-size: 13px; color: var(--text-sub); margin-top: 10px; }
+  .char-lead { font-family: var(--font-pixel); font-size: 13.5px; color: var(--text-sub); margin-top: 14px; }
   .char-name {
-    font-size: 22px; font-weight: 800; color: var(--navy);
+    font-family: var(--font-pixel);
+    font-size: 25px; font-weight: 400; color: var(--ink);
     line-height: 1.4; margin: 2px 0 8px;
   }
-  @media (max-width: 480px) { .char-name { font-size: 19px; } }
+  @media (max-width: 480px) { .char-name { font-size: 20px; } }
   .char-type-badge {
     display: inline-block;
-    background: var(--navy); color: #fff;
-    font-size: 12.5px; font-weight: 700;
-    padding: 3px 14px; border-radius: 999px;
-    margin-bottom: 10px;
+    background: var(--red); color: #fff;
+    font-family: var(--font-pixel);
+    font-size: 13px;
+    padding: 3px 14px;
+    border: 2px solid var(--ink);
+    border-radius: 6px;
+    box-shadow: 3px 3px 0 rgba(28, 28, 28, 0.75);
+    margin-bottom: 12px;
   }
   .char-copy { font-size: 14px; color: var(--text-sub); line-height: 1.8; }
   .char-basis {
     display: inline-block;
     margin-top: 10px;
     font-size: 12px;
-    color: var(--navy-light);
-    background: #e8eef4;
-    padding: 5px 14px;
-    border-radius: 999px;
+    color: #17707f;
+    background: #dff3f6;
+    border: 2px solid #17707f;
+    padding: 4px 14px;
+    border-radius: 6px;
   }
 
-  /* ===== 結果画面 ===== */
+  /* ===== 結果画面: 円形フィットゲージ（スコア表示はレトロ数字） ===== */
   .fit-gauge-wrap { text-align: center; padding: 8px 0 4px; }
-  .fit-score { font-size: 52px; font-weight: 800; color: var(--navy); line-height: 1.1; }
-  .fit-score small { font-size: 22px; color: var(--text-sub); font-weight: 700; }
-  .gauge-track {
-    height: 16px; background: var(--line);
-    border-radius: 999px; overflow: hidden;
-    margin: 14px 0 10px;
+  .fit-gauge-wrap .sub { font-family: var(--font-pixel); font-size: 15px; }
+  .fit-ring-wrap { position: relative; width: 190px; margin: 14px auto 8px; }
+  .fit-ring { display: block; width: 100%; transform: rotate(-90deg); }
+  .ring-bg { fill: none; stroke: #e6eaed; stroke-width: 13; }
+  .ring-fg { fill: none; stroke-width: 13; stroke-linecap: butt; }
+  .fit-ring-center {
+    position: absolute; inset: 0;
+    display: flex; align-items: baseline; justify-content: center;
+    padding-top: 76px;
   }
-  .gauge-fill {
-    height: 100%;
-    background: linear-gradient(90deg, var(--navy-light), var(--accent));
-    border-radius: 999px;
-    transition: width 0.8s ease;
+  .fit-ring-center .num {
+    font-family: var(--font-8bit);
+    font-size: 36px;
+    color: var(--ink); line-height: 1;
   }
+  .fit-ring-center .unit { font-family: var(--font-8bit); font-size: 14px; color: var(--text-sub); margin-left: 4px; }
+
   .chart-box { position: relative; width: 100%; max-width: 420px; margin: 0 auto; }
   .dept-row {
-    padding: 13px 16px;
-    border-radius: 10px;
-    border: 1.5px solid var(--line);
-    margin-bottom: 10px;
+    padding: 14px 16px;
+    border-radius: 8px;
+    border: 2.5px solid var(--ink);
+    background: #fff;
+    box-shadow: 3px 3px 0 rgba(28, 28, 28, 0.4);
+    margin-bottom: 12px;
   }
-  .dept-row.best { border-color: var(--accent); background: var(--accent-soft); }
+  .dept-row.best {
+    background: var(--select);
+    box-shadow: 4px 4px 0 rgba(28, 28, 28, 0.75);
+  }
   .dept-row .dept-head {
     display: flex; align-items: center; justify-content: space-between;
-    gap: 10px; margin-bottom: 4px;
+    gap: 10px; margin-bottom: 2px;
   }
-  .dept-row .dept-name { font-weight: 800; color: var(--navy); font-size: 15px; }
-  .dept-row .dept-score { font-weight: 800; font-size: 19px; color: var(--accent); flex-shrink: 0; }
+  .dept-row .dept-name { font-weight: 800; color: var(--ink); font-size: 15px; }
+  .dept-row .dept-score { font-family: var(--font-8bit); font-size: 15px; color: var(--red); flex-shrink: 0; }
+  .dept-bar {
+    height: 10px;
+    background: #fff;
+    border: 2px solid var(--ink);
+    border-radius: 4px;
+    overflow: hidden;
+    margin: 6px 0 8px;
+  }
+  .dept-bar-fill {
+    height: 100%;
+    background:
+      repeating-linear-gradient(90deg, transparent 0 6px, rgba(255, 255, 255, 0.3) 6px 8px),
+      var(--red);
+  }
   .dept-row .dept-comment { font-size: 13px; color: var(--text-sub); line-height: 1.6; }
   .best-badge {
     display: inline-block;
-    background: var(--accent); color: #fff;
-    font-size: 11px; font-weight: 700;
-    padding: 2px 10px; border-radius: 999px;
+    background: var(--yellow); color: var(--ink);
+    font-family: var(--font-pixel);
+    font-size: 11.5px;
+    border: 2px solid var(--ink);
+    padding: 1px 9px; border-radius: 5px;
     margin-left: 8px; vertical-align: 2px;
   }
   .profile-section { margin-bottom: 16px; }
@@ -382,14 +617,17 @@
   .profile-section li { margin-bottom: 3px; }
 
   /* ===== 特性詳細（表・バッジ・強みチップ） ===== */
-  .strength-chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 4px; }
+  .strength-chips { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0 4px; }
   .chip {
     display: inline-flex; align-items: center; gap: 6px;
     font-size: 13px; font-weight: 700;
-    padding: 6px 14px; border-radius: 999px;
+    padding: 5px 13px;
+    border-radius: 6px;
+    border: 2px solid var(--ink);
+    box-shadow: 2px 2px 0 rgba(28, 28, 28, 0.5);
   }
-  .chip-strong { background: var(--accent-soft); color: var(--accent); border: 1px solid #e4c9a8; }
-  .chip-grow   { background: #e9f3ee; color: var(--green); border: 1px solid #c4dfd2; }
+  .chip-strong { background: #ffe3e5; color: var(--red-dark); }
+  .chip-grow   { background: #e2f4e3; color: #22703a; }
 
   .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
   .detail-table {
@@ -400,28 +638,31 @@
   }
   .detail-table th {
     text-align: left;
-    font-size: 12px;
+    font-family: var(--font-pixel);
+    font-size: 12.5px;
     color: var(--text-sub);
-    border-bottom: 2px solid var(--line);
+    border-bottom: 3px solid var(--ink);
     padding: 8px 10px;
     white-space: nowrap;
   }
   .detail-table td {
     padding: 10px;
-    border-bottom: 1px solid var(--line);
+    border-bottom: 2px solid var(--line);
     vertical-align: top;
     line-height: 1.6;
   }
-  .detail-table td.score-cell { font-weight: 800; color: var(--navy); white-space: nowrap; }
+  .detail-table td.score-cell { font-family: var(--font-8bit); font-size: 12px; color: var(--ink); white-space: nowrap; }
   .band-badge {
     display: inline-block;
-    font-size: 11.5px; font-weight: 700;
-    padding: 2px 10px; border-radius: 999px;
+    font-family: var(--font-pixel);
+    font-size: 12px;
+    border: 2px solid var(--ink);
+    padding: 1px 9px; border-radius: 5px;
     white-space: nowrap;
   }
-  .band-strong { background: var(--accent-soft); color: var(--accent); }
-  .band-stable { background: #e8eef4; color: var(--navy-light); }
-  .band-grow   { background: #e9f3ee; color: var(--green); }
+  .band-strong { background: #ffe3e5; color: var(--red-dark); }
+  .band-stable { background: #ddf1fb; color: #16607e; }
+  .band-grow   { background: #e2f4e3; color: #22703a; }
 
   /* スマホでは表を横スクロールさせず、1行＝1カードの縦積みに切り替える */
   @media (max-width: 560px) {
@@ -429,10 +670,11 @@
     .detail-table thead { display: none; }
     .detail-table tbody tr {
       display: block;
-      border: 1.5px solid var(--line);
-      border-radius: 10px;
+      border: 2.5px solid var(--ink);
+      border-radius: 8px;
+      box-shadow: 3px 3px 0 rgba(28, 28, 28, 0.4);
       padding: 12px 14px;
-      margin-bottom: 10px;
+      margin-bottom: 12px;
     }
     .detail-table td {
       display: block;
@@ -442,29 +684,62 @@
   }
 
   .mini-bar-track {
-    width: 90px; height: 7px;
-    background: var(--line); border-radius: 999px;
+    width: 90px; height: 9px;
+    background: #fff;
+    border: 2px solid var(--ink);
+    border-radius: 3px;
     overflow: hidden; display: inline-block;
-    vertical-align: 2px; margin-left: 8px;
+    vertical-align: 1px; margin-left: 8px;
   }
-  .mini-bar-fill { height: 100%; background: linear-gradient(90deg, var(--navy-light), var(--accent)); border-radius: 999px; }
+  .mini-bar-fill { height: 100%; background: var(--red); }
 
   .disclaimer {
-    background: #eef3f7;
-    border-left: 5px solid var(--navy);
+    background: #fff8e1;
+    border: 2px dashed var(--ink);
     border-radius: 8px;
     padding: 16px 18px;
     font-size: 13.5px;
     color: var(--text);
     line-height: 1.8;
   }
-  .disclaimer strong { color: var(--navy); display: block; margin-bottom: 4px; }
+  .disclaimer strong { font-family: var(--font-pixel); color: var(--ink); display: block; margin-bottom: 4px; }
 
-  .app-footer {
+  .result-actions { display: flex; gap: 14px; }
+  .result-actions .btn { flex: 1; }
+
+  /* ===== フッター: ドット絵の地面にキャラが立つ ===== */
+  .app-footer { margin-top: 34px; padding: 0; }
+  .ground-sprites {
+    display: flex; justify-content: center; align-items: flex-end;
+    gap: 30px;
+    margin-bottom: -3px;
+    position: relative; z-index: 1;
+  }
+  .ground-sprite { animation: bob 0.9s steps(2) infinite; }
+  .ground-scene {
+    border-top: 4px solid var(--ink);
+    background:
+      repeating-linear-gradient(90deg, transparent 0 10px, rgba(0, 0, 0, 0.07) 10px 20px),
+      linear-gradient(var(--green) 0 16px, #2e8b33 16px 20px, var(--dirt) 20px);
+    padding: 30px 16px 20px;
     text-align: center;
-    font-size: 12px;
-    color: var(--text-sub);
-    padding: 16px;
+  }
+  .ground-scene .copyright {
+    font-family: var(--font-pixel);
+    font-size: 12.5px;
+    color: #f7ecd8;
+    text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.45);
+  }
+
+  /* ===== 印刷 / PDF保存用（結果画面を想定） ===== */
+  @media print {
+    body { background: #fff; font-size: 13px; }
+    .card { box-shadow: none; border: 2px solid #333; break-inside: avoid; margin-bottom: 14px; }
+    .screen > *, .char-frame { animation: none !important; }
+    .header-box { box-shadow: none; }
+    .result-actions, .quiz-nav, .ground-sprites { display: none !important; }
+    .ground-scene { background: none; border: none; padding: 8px; }
+    .ground-scene .copyright { color: #555; text-shadow: none; }
   }
 </style>
 </head>
@@ -473,6 +748,26 @@
 
 <script type="text/babel">
 const { useState, useEffect, useRef } = React;
+
+/* ============================================================
+   ▼ 進捗の一時保存（リロード事故対策）
+   sessionStorage を使用: このブラウザのタブ内のみ・タブを閉じると消える。
+   外部への送信は一切なし。結果表示のタイミングで自動削除する。
+   ============================================================ */
+const STORAGE_KEY = "sanjo-mbti-progress";
+function loadSavedProgress() {
+  try {
+    const d = JSON.parse(sessionStorage.getItem(STORAGE_KEY));
+    if (d && TYPE_PROFILES[d.type] && Array.isArray(d.answers)) return d;
+  } catch (e) { /* 破損データは無視して新規扱い */ }
+  return null;
+}
+function saveProgress(type, answers) {
+  try { sessionStorage.setItem(STORAGE_KEY, JSON.stringify({ type, answers })); } catch (e) {}
+}
+function clearProgress() {
+  try { sessionStorage.removeItem(STORAGE_KEY); } catch (e) {}
+}
 
 /* ============================================================
    ▼ 調整用定数（スコアの効き方を変えたいときはここ）
@@ -1257,7 +1552,7 @@ const AXES = [
 
 const ALL_TYPES = Object.keys(TYPE_PROFILES);
 
-const DISCLAIMER_TEXT = "本診断は応募者ご自身の自己理解と、面接での対話のきっかけづくりを目的とした参考情報です。MBTIおよび本診断の結果は、採用の合否や特定部署への配属を決定するものではありません。性格タイプに優劣はなく、結果によって不利益な取り扱いを受けることはありません。回答内容はこのブラウザ内でのみ処理され、どこにも送信・保存されません。";
+const DISCLAIMER_TEXT = "本診断は応募者ご自身の自己理解と、面接での対話のきっかけづくりを目的とした参考情報です。MBTIおよび本診断の結果は、採用の合否や特定部署への配属を決定するものではありません。性格タイプに優劣はなく、結果によって不利益な取り扱いを受けることはありません。回答内容はこのブラウザ内でのみ処理され、外部に送信されることはありません（回答中の一時データも結果表示の時点で自動削除されます）。";
 
 /* ============================================================
    ▼ スコアリングロジック
@@ -1360,11 +1655,67 @@ function PixelSprite({ grid, palette, size }) {
   );
 }
 
+/* --- カウントアップ演出（結果画面のスコア表示用） --- */
+function useCountUp(target, duration = 1100) {
+  const [val, setVal] = useState(0);
+  useEffect(() => {
+    let start = null, raf;
+    const step = (t) => {
+      if (start === null) start = t;
+      const p = Math.min((t - start) / duration, 1);
+      const eased = 1 - Math.pow(1 - p, 3); // ease-out cubic
+      setVal(Math.round(target * eased));
+      if (p < 1) raf = requestAnimationFrame(step);
+    };
+    raf = requestAnimationFrame(step);
+    /* 非表示タブなどでrAFが動かない場合の保険: 最終値を必ず反映する */
+    const fallback = setTimeout(() => setVal(target), duration + 400);
+    return () => { cancelAnimationFrame(raf); clearTimeout(fallback); };
+  }, [target, duration]);
+  return val;
+}
+
+/* --- カルチャーフィット度の円形ゲージ（カウントアップと同期して弧が伸びる） --- */
+function FitGauge({ score }) {
+  const val = useCountUp(score);
+  const R = 84;
+  const C = 2 * Math.PI * R;
+  return (
+    <div className="fit-ring-wrap" role="img"
+      aria-label={`カルチャーフィット度 ${score}パーセント`}>
+      <svg className="fit-ring" viewBox="0 0 200 200" aria-hidden="true">
+        <defs>
+          <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#e60012" />
+            <stop offset="100%" stopColor="#ff8a00" />
+          </linearGradient>
+        </defs>
+        <circle className="ring-bg" cx="100" cy="100" r={R} />
+        <circle className="ring-fg" cx="100" cy="100" r={R}
+          stroke="url(#ringGrad)"
+          strokeDasharray={C}
+          strokeDashoffset={C * (1 - val / 100)} />
+      </svg>
+      <div className="fit-ring-center" aria-hidden="true">
+        <span className="num">{val}</span><span className="unit">%</span>
+      </div>
+    </div>
+  );
+}
+
 /* --- 画面1: トップ --- */
-function TopScreen({ onStart }) {
+function TopScreen({ onStart, savedProgress, onResume }) {
+  const teaser = ["gorilla", "kuroneko", "usagi", "hayabusa", "panda", "fukurou"];
   return (
     <div className="screen">
       <div className="card">
+        <div className="hero-sprites" aria-hidden="true">
+          {teaser.map((k, i) => (
+            <div className="hero-sprite" key={k} style={{ animationDelay: `${i * 0.4}s` }}>
+              <PixelSprite grid={CHARACTERS[k].grid} palette={CHARACTERS[k].palette} size={46} />
+            </div>
+          ))}
+        </div>
         <span className="hero-badge">採用選考 参考ツール</span>
         <h1>ビジネス版MBTI適性診断</h1>
         <p className="sub">
@@ -1384,11 +1735,17 @@ function TopScreen({ onStart }) {
           <strong>はじめにお読みください：</strong>
           本診断は合否を決めるものではなく、ご自身の理解と面接での対話のきっかけづくりのための
           <b>参考情報</b>です。正直に、直感でお答えいただくのが最も有意義な結果につながります。
-          回答はこのブラウザ内でのみ処理され、どこにも送信・保存されません。
+          回答はこのブラウザ内でのみ処理され、外部に送信されることはありません。
         </div>
         <button className="btn btn-primary btn-wide" onClick={onStart}>
           診断をはじめる
         </button>
+        {/* リロード等で中断した回答が残っている場合のみ表示 */}
+        {savedProgress && (
+          <button className="btn btn-ghost btn-wide" style={{ marginTop: 10 }} onClick={onResume}>
+            続きから再開する（{savedProgress.type}・{savedProgress.answers.filter(a => a !== null).length}問回答済み）
+          </button>
+        )}
       </div>
     </div>
   );
@@ -1428,11 +1785,12 @@ function TypeSelectScreen({ onDecide }) {
                     <button key={opt.letter}
                       className={"axis-option" + (axisPicks[idx] === opt.letter ? " selected" : "")}
                       aria-pressed={axisPicks[idx] === opt.letter}
-                      onClick={() => {
-                        const next = [...axisPicks];
+                      onClick={() => setAxisPicks(prev => {
+                        /* 関数型更新: 素早い連続クリックでも選択を取りこぼさない */
+                        const next = [...prev];
                         next[idx] = opt.letter;
-                        setAxisPicks(next);
-                      }}>
+                        return next;
+                      })}>
                       <span className="letter">{opt.letter}</span>
                       <span className="desc"> — {opt.desc}</span>
                     </button>
@@ -1489,13 +1847,28 @@ function QuizScreen({ questions, answers, setAnswers, onFinish }) {
   /* 自動送りは「現在の質問の次」へ絶対値で移動する。
      素早い連打でタイマーが2重発火しても同じ質問に着地し、質問飛ばしを防ぐ */
   const select = (value) => {
-    const next = [...answers];
-    next[idx] = value;
-    setAnswers(next);
+    setAnswers(prev => {
+      /* 関数型更新: キー連打などの連続入力でも回答を取りこぼさない */
+      const next = [...prev];
+      next[idx] = value;
+      return next;
+    });
     if (!isLast) setTimeout(() => setIdx(Math.min(idx + 1, total - 1)), 180);
   };
 
   const firstUnanswered = answers.indexOf(null);
+
+  /* キーボード操作: 1〜5キーで回答、←→で前後の質問へ移動 */
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      if (e.key >= "1" && e.key <= "5") select(Number(e.key));
+      else if (e.key === "ArrowLeft" && idx > 0) setIdx(idx - 1);
+      else if (e.key === "ArrowRight" && !isLast && answers[idx] !== null) setIdx(idx + 1);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  });
 
   return (
     <div className="screen">
@@ -1511,23 +1884,30 @@ function QuizScreen({ questions, answers, setAnswers, onFinish }) {
           </div>
         </div>
 
-        <span className="q-category">{CATEGORIES[q.cat]}</span>
-        <p className="q-text">Q{idx + 1}. {q.text}</p>
+        {/* key=idx でアニメーションを設問ごとに再発火させる */}
+        <div className="q-anim" key={idx}>
+          <span className="q-category">{CATEGORIES[q.cat]}</span>
+          <p className="q-text">Q{idx + 1}. {q.text}</p>
 
-        <div className="likert" role="radiogroup" aria-label="回答を選択">
-          {LIKERT_LABELS.map((label, i) => {
-            const value = i + 1;
-            const sel = answers[idx] === value;
-            return (
-              <button key={value} role="radio" aria-checked={sel}
-                className={"likert-option" + (sel ? " selected" : "")}
-                onClick={() => select(value)}>
-                <span className="num">{value}</span>
-                {label}
-              </button>
-            );
-          })}
+          <div className="likert" role="radiogroup" aria-label="回答を選択">
+            {LIKERT_LABELS.map((label, i) => {
+              const value = i + 1;
+              const sel = answers[idx] === value;
+              return (
+                <button key={value} role="radio" aria-checked={sel}
+                  className={"likert-option" + (sel ? " selected" : "")}
+                  onClick={() => select(value)}>
+                  <span className="num">{value}</span>
+                  {label}
+                </button>
+              );
+            })}
+          </div>
         </div>
+
+        <p className="kbd-hint">
+          キーボードの <kbd>1</kbd>〜<kbd>5</kbd> でも回答できます（<kbd>←</kbd> <kbd>→</kbd> で移動）
+        </p>
 
         <div className="quiz-nav">
           <button className="btn btn-ghost" disabled={idx === 0}
@@ -1569,10 +1949,10 @@ function DeptRadarChart({ deptScores }) {
         datasets: [{
           label: "部署別適性スコア",
           data: deptKeys.map(k => deptScores[k]),
-          backgroundColor: "rgba(192, 123, 58, 0.22)",
-          borderColor: "#c07b3a",
+          backgroundColor: "rgba(230, 0, 18, 0.16)",
+          borderColor: "#e60012",
           borderWidth: 2.5,
-          pointBackgroundColor: "#16324f",
+          pointBackgroundColor: "#1c1c1c",
           pointRadius: 5,
         }],
       },
@@ -1582,10 +1962,10 @@ function DeptRadarChart({ deptScores }) {
         scales: {
           r: {
             min: 0, max: 100,
-            ticks: { stepSize: 20, backdropColor: "transparent", color: "#5a6b7a" },
-            grid: { color: "#dde4ea" },
-            angleLines: { color: "#dde4ea" },
-            pointLabels: { font: { size: 12, weight: "700" }, color: "#16324f" },
+            ticks: { stepSize: 20, backdropColor: "transparent", color: "#5b6770" },
+            grid: { color: "#dfe5e8" },
+            angleLines: { color: "#dfe5e8" },
+            pointLabels: { font: { size: 13, family: "DotGothic16" }, color: "#1c1c1c" },
           },
         },
         plugins: { legend: { display: false } },
@@ -1613,9 +1993,11 @@ function CategoryBarChart({ catDisplay }) {
           label: "カテゴリスコア",
           data: keys.map(k => catDisplay[k]),
           backgroundColor: keys.map(k =>
-            catDisplay[k] >= 75 ? "rgba(192,123,58,0.85)" :
-            catDisplay[k] >= 60 ? "rgba(44,85,120,0.8)" : "rgba(46,125,91,0.75)"),
-          borderRadius: 6,
+            catDisplay[k] >= 75 ? "rgba(230,0,18,0.8)" :
+            catDisplay[k] >= 60 ? "rgba(41,171,226,0.85)" : "rgba(67,176,71,0.85)"),
+          borderColor: "#1c1c1c",
+          borderWidth: 2,
+          borderRadius: 3,
           barThickness: 18,
         }],
       },
@@ -1624,8 +2006,8 @@ function CategoryBarChart({ catDisplay }) {
         responsive: true,
         maintainAspectRatio: false,
         scales: {
-          x: { min: 0, max: 100, ticks: { stepSize: 20, color: "#5a6b7a" }, grid: { color: "#dde4ea" } },
-          y: { ticks: { font: { size: 12.5, weight: "700" }, color: "#16324f" }, grid: { display: false } },
+          x: { min: 0, max: 100, ticks: { stepSize: 20, color: "#5b6770" }, grid: { color: "#dfe5e8" } },
+          y: { ticks: { font: { size: 13, family: "DotGothic16" }, color: "#1c1c1c" }, grid: { display: false } },
         },
         plugins: { legend: { display: false } },
       },
@@ -1667,7 +2049,9 @@ function ResultScreen({ type, questions, answers, onRestart }) {
       <div className="card">
         <h2>診断結果</h2>
         <div className="char-hero">
-          <PixelSprite grid={chara.grid} palette={chara.palette} size={132} />
+          <div className="char-frame">
+            <PixelSprite grid={chara.grid} palette={chara.palette} size={132} />
+          </div>
           <div className="char-lead">あなたの回答から見えたのは…</div>
           <div className="char-name">『{chara.name}』</div>
           <div className="char-type-badge">{type}（{profile.label}）</div>
@@ -1678,12 +2062,7 @@ function ResultScreen({ type, questions, answers, onRestart }) {
         </div>
         <div className="fit-gauge-wrap">
           <p className="sub" style={{fontWeight: 700}}>三条工務店とのカルチャーフィット度</p>
-          <div className="fit-score">{cultureFit}<small> %</small></div>
-          <div className="gauge-track" role="progressbar"
-            aria-valuenow={cultureFit} aria-valuemin={0} aria-valuemax={100}
-            aria-label="カルチャーフィット度">
-            <div className="gauge-fill" style={{ width: `${cultureFit}%` }} />
-          </div>
+          <FitGauge score={cultureFit} />
         </div>
         <p className="sub">{fitComment(cultureFit)}</p>
       </div>
@@ -1701,6 +2080,9 @@ function ResultScreen({ type, questions, answers, onRestart }) {
                   {dept === bestDept && <span className="best-badge">BEST</span>}
                 </span>
                 <span className="dept-score">{deptScores[dept]}<small style={{fontSize: 12}}> /100</small></span>
+              </div>
+              <div className="dept-bar" aria-hidden="true">
+                <div className="dept-bar-fill" style={{ width: `${deptScores[dept]}%` }} />
               </div>
               <p className="dept-comment">
                 {deptComment(dept, deptScores[dept], dept === bestDept)} {DEPT_INFO[dept].comment}
@@ -1810,10 +2192,16 @@ function ResultScreen({ type, questions, answers, onRestart }) {
         </div>
       </div>
 
-      {/* (e) 再診断 */}
-      <button className="btn btn-ghost btn-wide" onClick={onRestart}>
-        もう一度診断する
-      </button>
+      {/* (e) 印刷・再診断 */}
+      <div className="result-actions">
+        <button className="btn btn-ghost" onClick={() => window.print()}>
+          結果を印刷 / PDF保存
+        </button>
+        <button className="btn btn-ghost"
+          onClick={() => { if (window.confirm("結果を破棄してトップに戻ります。よろしいですか？")) onRestart(); }}>
+          もう一度診断する
+        </button>
+      </div>
     </div>
   );
 }
@@ -1824,6 +2212,17 @@ function App() {
   const [mbtiType, setMbtiType] = useState(null);
   const [questions, setQuestions] = useState([]);
   const [answers, setAnswers] = useState([]);
+  /* リロード等で中断した進捗（あればトップ画面に再開ボタンを出す） */
+  const [savedProgress, setSavedProgress] = useState(loadSavedProgress);
+
+  /* 画面切替時はページ先頭へ */
+  useEffect(() => { window.scrollTo({ top: 0, behavior: "smooth" }); }, [screen]);
+
+  /* 回答中は進捗を一時保存し、結果表示のタイミングで削除する */
+  useEffect(() => {
+    if (screen === "quiz" && mbtiType) saveProgress(mbtiType, answers);
+    else if (screen === "result") clearProgress();
+  }, [screen, mbtiType, answers]);
 
   const startQuiz = (type) => {
     const qs = buildQuestions(type);
@@ -1833,7 +2232,19 @@ function App() {
     setScreen("quiz");
   };
 
+  /* 一時保存からの再開（質問数が変わっていても落ちないよう長さを合わせる） */
+  const resume = () => {
+    const qs = buildQuestions(savedProgress.type);
+    setMbtiType(savedProgress.type);
+    setQuestions(qs);
+    setAnswers(Array(qs.length).fill(null).map((_, i) =>
+      savedProgress.answers[i] != null ? savedProgress.answers[i] : null));
+    setScreen("quiz");
+  };
+
   const restart = () => {
+    clearProgress();
+    setSavedProgress(null);
     setMbtiType(null);
     setQuestions([]);
     setAnswers([]);
@@ -1843,11 +2254,16 @@ function App() {
   return (
     <React.Fragment>
       <header className="app-header">
-        <div className="brand">SANJO KOMUTEN</div>
-        <div className="title">株式会社三条工務店 ビジネス適性診断</div>
+        <div className="header-box">
+          <div className="brand">SANJO KOMUTEN</div>
+          <div className="title">株式会社三条工務店 ビジネス適性診断</div>
+        </div>
       </header>
       <main className="container">
-        {screen === "top" && <TopScreen onStart={() => setScreen("type")} />}
+        {screen === "top" && (
+          <TopScreen onStart={() => setScreen("type")}
+            savedProgress={savedProgress} onResume={resume} />
+        )}
         {screen === "type" && <TypeSelectScreen onDecide={startQuiz} />}
         {screen === "quiz" && (
           <QuizScreen questions={questions} answers={answers}
@@ -1859,7 +2275,17 @@ function App() {
         )}
       </main>
       <footer className="app-footer">
-        © 株式会社三条工務店 — 本診断の回答はどこにも送信・保存されません
+        {/* ドット絵の地面にキャラクターが立つゲーム風フッター */}
+        <div className="ground-sprites" aria-hidden="true">
+          {["pochi", "kame", "inko", "risu"].map((k, i) => (
+            <div className="ground-sprite" key={k} style={{ animationDelay: `${i * 0.25}s` }}>
+              <PixelSprite grid={CHARACTERS[k].grid} palette={CHARACTERS[k].palette} size={42} />
+            </div>
+          ))}
+        </div>
+        <div className="ground-scene">
+          <div className="copyright">© 株式会社三条工務店 — 本診断の回答が外部に送信されることはありません</div>
+        </div>
       </footer>
     </React.Fragment>
   );
