@@ -3152,12 +3152,18 @@ function ResultScreen({ type, questions, answers, onRestart }) {
   );
 }
 
+/* デモ用: URL末尾に #demo-result を付けると、サンプル回答済みの結果画面を直接開ける
+   （結果シートの確認・印刷テスト用。通常の利用には影響しない） */
+const DEMO_MODE = window.location.hash === "#demo-result";
+const DEMO_TYPE = "ENFJ";
+const DEMO_ANSWERS = buildQuestions(DEMO_TYPE).map((q, i) => [4, 4, 2, 5, 3, 4, 4, 3][i % 8]);
+
 /* --- ルート: 4画面をuseStateで切り替えるSPA --- */
 function App() {
-  const [screen, setScreen] = useState("top");   // top | type | quiz | result
-  const [mbtiType, setMbtiType] = useState(null);
-  const [questions, setQuestions] = useState([]);
-  const [answers, setAnswers] = useState([]);
+  const [screen, setScreen] = useState(DEMO_MODE ? "result" : "top");   // top | type | quiz | result
+  const [mbtiType, setMbtiType] = useState(DEMO_MODE ? DEMO_TYPE : null);
+  const [questions, setQuestions] = useState(DEMO_MODE ? buildQuestions(DEMO_TYPE) : []);
+  const [answers, setAnswers] = useState(DEMO_MODE ? DEMO_ANSWERS : []);
   /* リロード等で中断した進捗（あればトップ画面に再開ボタンを出す） */
   const [savedProgress, setSavedProgress] = useState(loadSavedProgress);
 
