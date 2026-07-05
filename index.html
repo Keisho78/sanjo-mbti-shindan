@@ -579,6 +579,47 @@
   .selected-type-bar .btn { border-color: rgba(246, 239, 228, 0.6); color: var(--cream-text); background: transparent; }
   .selected-type-bar .btn:hover:not(:disabled) { background: var(--cream-text); color: var(--dark); }
 
+  /* ===== 応募者プロフィール入力（タイプ選択画面・任意） ===== */
+  .profile-fields {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 22px;
+    margin: 4px 0 26px;
+  }
+  @media (max-width: 560px) { .profile-fields { grid-template-columns: 1fr; gap: 14px; } }
+  .profile-fields label { display: block; }
+  .pf-label {
+    display: block;
+    font-size: 11px;
+    letter-spacing: 0.16em;
+    color: var(--brown);
+    margin-bottom: 2px;
+  }
+  .profile-fields input {
+    width: 100%;
+    border: none;
+    border-bottom: 1px solid var(--line);
+    border-radius: 0;
+    background: transparent;
+    padding: 7px 2px;
+    font-family: inherit;
+    font-size: 15px;
+    color: var(--text);
+  }
+  .profile-fields input::placeholder { color: #cfc4b0; }
+  .profile-fields input:focus { outline: none; border-bottom-color: var(--brown); }
+
+  /* 結果画面の回答者表示 */
+  .result-person {
+    text-align: right;
+    font-size: 13px;
+    letter-spacing: 0.04em;
+    color: var(--text-sub);
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 12px;
+    margin-bottom: 18px;
+  }
+
   /* ===== 質問画面 ===== */
   .progress-wrap { margin-bottom: 30px; }
   .progress-meta {
@@ -999,6 +1040,7 @@
     color: #332e28;
   }
   .ps-meta { text-align: right; font-size: 10px; color: #555; }
+  .ps-applicant { font-weight: 700; color: #4a4038; }
 
   /* 1段目: キャラクター＋フィット度ゲージ */
   .ps-main {
@@ -1130,8 +1172,8 @@ function loadSavedProgress() {
   } catch (e) { /* 破損データは無視して新規扱い */ }
   return null;
 }
-function saveProgress(type, answers) {
-  try { sessionStorage.setItem(STORAGE_KEY, JSON.stringify({ type, answers })); } catch (e) {}
+function saveProgress(type, answers, applicant) {
+  try { sessionStorage.setItem(STORAGE_KEY, JSON.stringify({ type, answers, applicant })); } catch (e) {}
 }
 function clearProgress() {
   try { sessionStorage.removeItem(STORAGE_KEY); } catch (e) {}
@@ -2512,7 +2554,7 @@ function TopScreen({ onStart, savedProgress, onResume }) {
 }
 
 /* --- 画面2: MBTIタイプ選択 --- */
-function TypeSelectScreen({ onDecide }) {
+function TypeSelectScreen({ onDecide, applicant, setApplicant }) {
   const [mode, setMode] = useState("axis");            // "axis" | "grid"
   const [axisPicks, setAxisPicks] = useState([null, null, null, null]);
   const [gridPick, setGridPick] = useState(null);
@@ -2524,6 +2566,22 @@ function TypeSelectScreen({ onDecide }) {
     <div className="screen">
       <SectionTitle en="SELECT" ja="あなたのMBTIタイプを選んでください" />
       <div className="card">
+        {/* 応募者プロフィール（任意）: 結果画面と結果シートのヘッダーに反映される */}
+        <div className="profile-fields">
+          <label>
+            <span className="pf-label">お名前（任意）</span>
+            <input type="text" value={applicant.name}
+              onChange={e => setApplicant({ ...applicant, name: e.target.value })}
+              placeholder="例）三条 太郎" />
+          </label>
+          <label>
+            <span className="pf-label">大学名（任意）</span>
+            <input type="text" value={applicant.school}
+              onChange={e => setApplicant({ ...applicant, school: e.target.value })}
+              placeholder="例）〇〇大学 △△学部" />
+          </label>
+        </div>
+
         <p className="sub">タイプが分かる方は「16タイプから選ぶ」、分からない方は「4つの軸から選ぶ」をご利用ください。</p>
 
         <div className="mode-tabs" role="tablist" style={{marginTop: 16}}>
@@ -2833,7 +2891,7 @@ function PrintRing({ value, size = 92 }) {
 }
 
 /* --- 印刷専用のA4一枚結果シート（画面では非表示。印刷時はこれだけを出力） --- */
-function PrintSheet({ type, profile, chara, cultureFit, deptScores, bestDept, catDisplay, rankedCats, topCats, growCat, answers }) {
+function PrintSheet({ type, profile, chara, cultureFit, deptScores, bestDept, catDisplay, rankedCats, topCats, growCat, answers, applicant }) {
   const today = new Date();
   const dateStr = `${today.getFullYear()}年${today.getMonth() + 1}月${today.getDate()}日`;
   return (
@@ -2844,6 +2902,11 @@ function PrintSheet({ type, profile, chara, cultureFit, deptScores, bestDept, ca
           <p className="ps-title">三条工務店 ビジネス適性診断　結果シート</p>
         </div>
         <div className="ps-meta">
+          {(applicant.name || applicant.school) && (
+            <p className="ps-applicant">
+              氏名：{applicant.name || "―"}{applicant.school ? `（${applicant.school}）` : ""}
+            </p>
+          )}
           <p>実施日：{dateStr}</p>
           <p>MBTIタイプ：{type}（{profile.label}）</p>
         </div>
@@ -2950,7 +3013,7 @@ function PrintSheet({ type, profile, chara, cultureFit, deptScores, bestDept, ca
 }
 
 /* --- 画面4: 結果 --- */
-function ResultScreen({ type, questions, answers, onRestart }) {
+function ResultScreen({ type, questions, answers, applicant, onRestart }) {
   const catScores = calcCategoryScores(questions, answers);
   const deptScores = calcDeptScores(catScores, type);
   const cultureFit = calcCultureFit(catScores);
@@ -2976,13 +3039,18 @@ function ResultScreen({ type, questions, answers, onRestart }) {
       <PrintSheet type={type} profile={profile} chara={chara}
         cultureFit={cultureFit} deptScores={deptScores} bestDept={bestDept}
         catDisplay={catDisplay} rankedCats={rankedCats}
-        topCats={topCats} growCat={growCat} answers={answers} />
+        topCats={topCats} growCat={growCat} answers={answers} applicant={applicant} />
 
       {/* (a) キャラクター＆カルチャーフィット度
            キャラは回答から算出したカテゴリスコアとのマッチ度で選定（MBTI固定ではない） */}
       <section className="result-sec">
       <SectionTitle en="RESULT" ja="診断結果" />
       <div className="card">
+        {(applicant.name || applicant.school) && (
+          <p className="result-person">
+            回答者：{applicant.name || "―"}{applicant.school ? `（${applicant.school}）` : ""}
+          </p>
+        )}
         <div className="char-hero">
           <div className="char-frame">
             <CharaSprite chara={chara.key} size={140} />
@@ -3164,6 +3232,9 @@ function App() {
   const [mbtiType, setMbtiType] = useState(DEMO_MODE ? DEMO_TYPE : null);
   const [questions, setQuestions] = useState(DEMO_MODE ? buildQuestions(DEMO_TYPE) : []);
   const [answers, setAnswers] = useState(DEMO_MODE ? DEMO_ANSWERS : []);
+  /* 応募者プロフィール（任意入力。結果画面と結果シートに反映される） */
+  const [applicant, setApplicant] = useState(
+    DEMO_MODE ? { name: "三条 太郎", school: "サンプル大学" } : { name: "", school: "" });
   /* リロード等で中断した進捗（あればトップ画面に再開ボタンを出す） */
   const [savedProgress, setSavedProgress] = useState(loadSavedProgress);
 
@@ -3172,9 +3243,9 @@ function App() {
 
   /* 回答中は進捗を一時保存し、結果表示のタイミングで削除する */
   useEffect(() => {
-    if (screen === "quiz" && mbtiType) saveProgress(mbtiType, answers);
+    if (screen === "quiz" && mbtiType) saveProgress(mbtiType, answers, applicant);
     else if (screen === "result") clearProgress();
-  }, [screen, mbtiType, answers]);
+  }, [screen, mbtiType, answers, applicant]);
 
   const startQuiz = (type) => {
     const qs = buildQuestions(type);
@@ -3191,6 +3262,7 @@ function App() {
     setQuestions(qs);
     setAnswers(Array(qs.length).fill(null).map((_, i) =>
       savedProgress.answers[i] != null ? savedProgress.answers[i] : null));
+    setApplicant(savedProgress.applicant || { name: "", school: "" });
     setScreen("quiz");
   };
 
@@ -3200,6 +3272,7 @@ function App() {
     setMbtiType(null);
     setQuestions([]);
     setAnswers([]);
+    setApplicant({ name: "", school: "" });
     setScreen("top");
   };
 
@@ -3213,14 +3286,17 @@ function App() {
             savedProgress={savedProgress} onResume={resume} />
         ) : (
           <div className="container">
-            {screen === "type" && <TypeSelectScreen onDecide={startQuiz} />}
+            {screen === "type" && (
+              <TypeSelectScreen onDecide={startQuiz}
+                applicant={applicant} setApplicant={setApplicant} />
+            )}
             {screen === "quiz" && (
               <QuizScreen questions={questions} answers={answers}
                 setAnswers={setAnswers} onFinish={() => setScreen("result")} />
             )}
             {screen === "result" && (
               <ResultScreen type={mbtiType} questions={questions}
-                answers={answers} onRestart={restart} />
+                answers={answers} applicant={applicant} onRestart={restart} />
             )}
           </div>
         )}
