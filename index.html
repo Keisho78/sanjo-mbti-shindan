@@ -293,6 +293,44 @@
   }
   .flow-grid p { font-size: 12.5px; line-height: 2; color: var(--text-sub); }
 
+  /* ===== Characters: 全16キャラクターの一覧（円形メダリオンのグリッド） ===== */
+  .sec-chars { background: var(--bg); }
+  .chars-note { font-size: 13.5px; color: var(--text-sub); margin: -6px 0 44px; }
+  .chars-grid {
+    list-style: none;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 40px 18px;
+  }
+  @media (max-width: 720px) { .chars-grid { grid-template-columns: repeat(2, 1fr); gap: 30px 12px; } }
+  .chars-grid li { text-align: center; }
+  .chars-medal {
+    width: 94px; height: 94px;
+    margin: 0 auto 14px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 50%;
+    background: radial-gradient(circle at 38% 30%, #fbf3e6, #f2e5d2);
+    border: 1px solid #ddcdb2;
+    transition: transform 0.3s ease;
+  }
+  .chars-grid li:hover .chars-medal { transform: translateY(-4px); }
+  .chars-medal svg { filter: saturate(0.82); }
+  .chars-name { line-height: 1.6; }
+  .chars-name .role {
+    display: block;
+    font-size: 10.5px;
+    letter-spacing: 0.08em;
+    color: var(--text-sub);
+  }
+  .chars-name strong {
+    display: block;
+    font-family: var(--font-min);
+    font-weight: 500;
+    font-size: 13.5px;
+    letter-spacing: 0.06em;
+    color: var(--ink);
+  }
+
   /* ===== Notice: ダークブラウンの帯 ===== */
   .sec-notice { background: var(--dark); }
   .sec-notice .sec-label { color: var(--brown-soft); }
@@ -907,16 +945,139 @@
     margin: 0 auto;
   }
 
-  /* ===== 印刷 / PDF保存用（結果画面を想定） ===== */
+  /* ===== 印刷: 結果はA4一枚の専用シートのみ出力 ===== */
+  .print-sheet { display: none; } /* 画面では非表示 */
   @media print {
-    body { background: #fff; font-size: 12.5px; }
-    .card { border: 1px solid #ccc; break-inside: avoid; margin-bottom: 14px; }
+    @page { size: A4 portrait; margin: 11mm 12mm; }
+    body { background: #fff; }
+    .topbar, .scroll-cue, .quiz-nav, .result-actions, .site-footer { display: none !important; }
     .screen > *, .char-frame { animation: none !important; }
-    .result-actions, .quiz-nav, .topbar, .scroll-cue { display: none !important; }
-    .container { padding-top: 20px; }
-    .site-footer { background: none; padding: 10px; }
-    .site-footer strong, .site-footer .f-sub { color: #555; }
-    .site-footer .copyright { color: #777; border-color: #ddd; }
+    .container { padding: 0 !important; max-width: none; }
+    /* 結果画面: 画面用のセクションをすべて隠し、専用シートだけを出す */
+    .has-print-sheet > *:not(.print-sheet) { display: none !important; }
+    .print-sheet { display: block !important; }
+    /* 結果以外の画面を印刷した場合の保険 */
+    .card { border: 1px solid #ccc; break-inside: avoid; }
+  }
+
+  /* ===== A4結果シートのレイアウト（印刷時のみ表示） ===== */
+  .print-sheet {
+    color: #333;
+    font-size: 11.5px;
+    line-height: 1.75;
+    page-break-inside: avoid;
+  }
+  .print-sheet h2 {
+    font-family: var(--font-min);
+    font-weight: 600;
+    font-size: 13px;
+    letter-spacing: 0.08em;
+    color: #4a4038;
+    border-left: 3px solid #8a6a48;
+    padding-left: 8px;
+    margin-bottom: 10px;
+  }
+  .ps-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    border-bottom: 2px solid #4a4038;
+    padding-bottom: 9px;
+    margin-bottom: 16px;
+  }
+  .ps-brand {
+    font-family: var(--font-en);
+    font-size: 8.5px;
+    letter-spacing: 0.3em;
+    color: #8a6a48;
+  }
+  .ps-title {
+    font-family: var(--font-min);
+    font-weight: 600;
+    font-size: 19px;
+    letter-spacing: 0.12em;
+    color: #332e28;
+  }
+  .ps-meta { text-align: right; font-size: 11px; color: #555; }
+  .ps-main {
+    display: grid;
+    grid-template-columns: 68mm 1fr;
+    gap: 9mm;
+    margin-bottom: 15px;
+  }
+  .ps-chara { text-align: center; }
+  .ps-chara-art {
+    width: 126px; height: 126px;
+    margin: 0 auto 8px;
+    display: flex; align-items: center; justify-content: center;
+    border: 1px solid #cdbfa8;
+    border-radius: 50%;
+    background: #faf5ec;
+  }
+  .ps-chara-lead { font-size: 9.5px; letter-spacing: 0.2em; color: #8a6a48; }
+  .ps-chara-name {
+    font-family: var(--font-min);
+    font-weight: 600;
+    font-size: 15.5px;
+    letter-spacing: 0.02em;
+    color: #332e28;
+    margin: 2px 0 4px;
+  }
+  .ps-chara-copy { font-size: 10.5px; color: #666; line-height: 1.7; text-align: left; }
+  .ps-fit {
+    margin-top: 9px;
+    padding-top: 9px;
+    border-top: 1px solid #ddd2c0;
+    font-size: 11px;
+    color: #4a4038;
+  }
+  .ps-fit strong { font-family: var(--font-min); font-size: 27px; font-weight: 600; color: #332e28; }
+  /* 横棒スコア行（部署・特性で共用） */
+  .ps-bar-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4.5px 0;
+  }
+  .ps-bar-row .name { flex: 0 0 118px; font-size: 10.5px; letter-spacing: 0; }
+  .ps-dept .ps-bar-row .name { flex: 0 0 80px; }
+  .ps-bar-row .bar {
+    flex: 1;
+    height: 6px;
+    background: #eee7da;
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .ps-bar-row .fill { display: block; height: 100%; background: #8a6a48; }
+  .ps-bar-row .score {
+    flex: 0 0 26px;
+    text-align: right;
+    font-family: var(--font-en);
+    font-size: 12px;
+    color: #332e28;
+  }
+  .ps-bar-row .band { flex: 0 0 42px; font-size: 9px; text-align: center; color: #8a6a48; border: 1px solid #d8c9b2; border-radius: 6px; padding: 0 2px; }
+  .ps-note { font-size: 9px; color: #999; margin-top: 4px; }
+  .ps-cats { margin-bottom: 15px; }
+  .ps-cats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    column-gap: 8mm;
+  }
+  .ps-profile {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 9mm;
+    margin-bottom: 15px;
+  }
+  .ps-profile ul { margin: 3px 0 0 15px; font-size: 10.5px; line-height: 1.85; }
+  .ps-profile p { font-size: 10.5px; line-height: 1.85; }
+  .ps-foot {
+    border-top: 1px solid #ccc;
+    padding-top: 8px;
+    font-size: 8.5px;
+    line-height: 1.6;
+    color: #888;
   }
 </style>
 </head>
@@ -2266,6 +2427,31 @@ function TopScreen({ onStart, savedProgress, onResume }) {
         </div>
       </section>
 
+      {/* Characters: 全16キャラクターの一覧 */}
+      <section className="sec sec-chars">
+        <div className="inner">
+          <span className="sec-label">Characters</span>
+          <h2 className="sec-heading">16のビジネスキャラクター</h2>
+          <p className="chars-note">
+            76問の回答から、あなたの持ち味に最も近いキャラクターがひとり選ばれます。
+          </p>
+          <ul className="chars-grid">
+            {Object.keys(CHARACTERS).map(k => {
+              const [role, nm] = CHARACTERS[k].name.split("・");
+              return (
+                <li key={k}>
+                  <div className="chars-medal"><CharaSprite chara={k} size={54} /></div>
+                  <p className="chars-name">
+                    <span className="role">{role}</span>
+                    <strong>{nm}</strong>
+                  </p>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      </section>
+
       {/* Notice: ダークブラウンの帯 */}
       <section className="sec sec-notice">
         <div className="inner notice-inner">
@@ -2564,6 +2750,77 @@ function CategoryBarChart({ catDisplay }) {
   );
 }
 
+/* --- 印刷専用のA4一枚結果シート（画面では非表示。印刷時はこれだけを出力） --- */
+function PrintSheet({ type, profile, chara, cultureFit, deptScores, bestDept, catDisplay, rankedCats, topCats, growCat }) {
+  const today = new Date();
+  const dateStr = `${today.getFullYear()}年${today.getMonth() + 1}月${today.getDate()}日`;
+  return (
+    <div className="print-sheet" aria-hidden="true">
+      <header className="ps-head">
+        <div>
+          <p className="ps-brand">SANJO KOMUTEN — BUSINESS APTITUDE TEST</p>
+          <p className="ps-title">三条工務店 ビジネス適性診断　結果シート</p>
+        </div>
+        <div className="ps-meta">
+          <p>実施日：{dateStr}</p>
+          <p>MBTIタイプ：{type}（{profile.label}）</p>
+        </div>
+      </header>
+
+      <section className="ps-main">
+        <div className="ps-chara">
+          <div className="ps-chara-art"><CharaSprite chara={chara.key} size={82} /></div>
+          <p className="ps-chara-lead">あなたのビジネスキャラクター</p>
+          <p className="ps-chara-name">『{chara.name}』</p>
+          <p className="ps-chara-copy">{chara.copy}</p>
+          <p className="ps-fit">
+            カルチャーフィット度　<strong>{cultureFit}</strong><span> %</span>
+          </p>
+        </div>
+        <div className="ps-dept">
+          <h2>部署別適性（100点満点）</h2>
+          {Object.keys(DEPT_WEIGHTS).map(d => (
+            <div key={d} className="ps-bar-row">
+              <span className="name">{DEPT_INFO[d].short}{d === bestDept ? " ◎" : ""}</span>
+              <span className="bar"><span className="fill" style={{ width: `${deptScores[d]}%` }} /></span>
+              <span className="score">{deptScores[d]}</span>
+            </div>
+          ))}
+          <p className="ps-note">◎＝最も適性が高い部署</p>
+        </div>
+      </section>
+
+      <section className="ps-cats">
+        <h2>特性スコア（10のビジネス特性・スコア順）</h2>
+        <div className="ps-cats-grid">
+          {rankedCats.map(k => (
+            <div key={k} className="ps-bar-row">
+              <span className="name">{CATEGORIES[k]}</span>
+              <span className="bar"><span className="fill" style={{ width: `${catDisplay[k]}%` }} /></span>
+              <span className="score">{catDisplay[k]}</span>
+              <span className="band">{catBand(catDisplay[k]).label}</span>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="ps-profile">
+        <div>
+          <h2>強み（{topCats.map(k => CATEGORIES[k]).join("／")}）</h2>
+          <ul>{profile.strengths.map(s => <li key={s}>{s}</li>)}</ul>
+        </div>
+        <div>
+          <h2>伸びしろ・チーム内での役割</h2>
+          <p>伸びしろ：{CATEGORIES[growCat]}</p>
+          <p>{profile.role}</p>
+        </div>
+      </section>
+
+      <footer className="ps-foot">{DISCLAIMER_TEXT}</footer>
+    </div>
+  );
+}
+
 /* --- 画面4: 結果 --- */
 function ResultScreen({ type, questions, answers, onRestart }) {
   const catScores = calcCategoryScores(questions, answers);
@@ -2586,7 +2843,13 @@ function ResultScreen({ type, questions, answers, onRestart }) {
   const chara = pickCharacter(catScores);
 
   return (
-    <div className="screen">
+    <div className="screen has-print-sheet">
+      {/* 印刷時はこのA4一枚シートのみ出力される */}
+      <PrintSheet type={type} profile={profile} chara={chara}
+        cultureFit={cultureFit} deptScores={deptScores} bestDept={bestDept}
+        catDisplay={catDisplay} rankedCats={rankedCats}
+        topCats={topCats} growCat={growCat} />
+
       {/* (a) キャラクター＆カルチャーフィット度
            キャラは回答から算出したカテゴリスコアとのマッチ度で選定（MBTI固定ではない） */}
       <section className="result-sec">
@@ -2750,7 +3013,7 @@ function ResultScreen({ type, questions, answers, onRestart }) {
       {/* (e) 印刷・再診断 */}
       <div className="result-actions">
         <button className="btn btn-ghost" onClick={() => window.print()}>
-          結果を印刷 / PDF保存
+          結果をPDF保存（A4・1枚）
         </button>
         <button className="btn btn-ghost"
           onClick={() => { if (window.confirm("結果を破棄してトップに戻ります。よろしいですか？")) onRestart(); }}>
