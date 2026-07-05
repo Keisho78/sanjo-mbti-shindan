@@ -51,81 +51,74 @@
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-<!-- Webフォント: 見出し=DotGothic16(ピクセル) / 本文=Noto Sans JP / 英字数字=Press Start 2P(8bit) -->
+<!-- Webフォント: 見出し=Zen Kaku Gothic New / 本文=Noto Sans JP / 英字数字=Raleway -->
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=DotGothic16&family=Noto+Sans+JP:wght@400;500;700&family=Press+Start+2P&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Raleway:wght@700;800&family=Zen+Kaku+Gothic+New:wght@700;900&display=swap" rel="stylesheet" />
 
 <style>
-  /* ===== デザイントークン: くにおくん風レトロゲームUI =====
-     明るいミント緑の背景＋RPGウィンドウ風の白カード（黒枠・ハードシャドウ）
-     見出し=DotGothic16 / 英字・数字アクセント=Press Start 2P */
+  /* ===== デザイントークン: 手描きイラスト調のやわらかいデザイン =====
+     クリーム背景＋黒細枠の角丸カード＋パステルカラー（空色・草色・コーラル・黄）
+     見出し=Zen Kaku Gothic New / 英字・数字=Raleway / 本文=Noto Sans JP */
   :root {
-    --ink: #1c1c1c;          /* 黒枠・文字のベース */
-    --red: #e60012;          /* ファミコン赤（プライマリ） */
-    --red-dark: #b3000e;
-    --blue: #29abe2;         /* スカイブルー */
-    --yellow: #ffd400;       /* コイン黄 */
-    --select: #fff3b0;       /* 選択中ハイライト（RPGメニュー風） */
-    --green: #43b047;        /* 草原グリーン */
-    --bg: #3ed0bd;           /* ミント緑の背景 */
-    --sky: #a9e0f7;          /* ステージの空 */
-    --dirt: #8a5a33;         /* 地面の土 */
-    --card: #ffffff;
-    --text: #222222;
-    --text-sub: #5b6770;
-    --line: #d9dee3;
-    --radius: 10px;
-    --font-pixel: "DotGothic16", "Noto Sans JP", monospace;
-    --font-8bit: "Press Start 2P", "DotGothic16", monospace;
-    --shadow-hard: 6px 6px 0 rgba(28, 28, 28, 0.75);
+    --ink: #2b2b2b;          /* 手描き風の黒（枠線・文字） */
+    --cream: #fff9da;        /* ページ背景のクリーム */
+    --paper: #f4f4ee;        /* カードのオフホワイト */
+    --green: #6ec177;        /* 草色（プライマリボタン） */
+    --green-deep: #3f9d63;
+    --hill-1: #b7d9a5;       /* 丘の緑（明） */
+    --hill-2: #9ecb90;       /* 丘の緑（中） */
+    --hill-3: #8cc07e;       /* 丘の緑（濃） */
+    --sky: #8fb8de;          /* 空色 */
+    --coral: #e0716a;        /* コーラル（アクセント） */
+    --yellow: #ffe164;       /* 吹き出し・選択中の黄 */
+    --yellow-deep: #eec34f;
+    --text: #333333;
+    --text-sub: #6b6f5e;
+    --line: #ddddd0;
+    --radius: 26px;
+    --font-head: "Zen Kaku Gothic New", "Noto Sans JP", sans-serif;
+    --font-en: "Raleway", "Zen Kaku Gothic New", sans-serif;
+    /* 手描き風の波線（区切り・下線に使用） */
+    --wavy: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='10'%3E%3Cpath d='M0 5 Q 6 0 12 5 T 24 5' fill='none' stroke='%232b2b2b' stroke-width='2.4' stroke-linecap='round'/%3E%3C/svg%3E");
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html { -webkit-text-size-adjust: 100%; }
   body {
     font-family: "Noto Sans JP", system-ui, -apple-system, "Hiragino Kaku Gothic ProN",
                  "Yu Gothic UI", Meiryo, sans-serif;
-    /* 斜めウォーターマーク＋うっすら走査線＋ミント緑 */
-    background-image:
-      repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.025) 0 2px, transparent 2px 4px),
-      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='380' height='280'%3E%3Cg fill='rgba(255,255,255,0.09)' font-family='Arial Black,Arial,sans-serif' font-size='26' font-weight='900'%3E%3Ctext x='190' y='100' text-anchor='middle' transform='rotate(-16 190 100)'%3ESANJO KOMUTEN!%3C/text%3E%3Ctext x='30' y='240' text-anchor='middle' transform='rotate(-16 30 240)'%3ESANJO!%3C/text%3E%3C/g%3E%3C/svg%3E");
-    background-color: var(--bg);
+    background: var(--cream);
     color: var(--text);
-    line-height: 1.75;
+    line-height: 1.8;
     font-size: 16px;
   }
   #root { min-height: 100vh; display: flex; flex-direction: column; }
-  button:focus-visible { outline: 3px solid var(--yellow); outline-offset: 2px; }
+  button:focus-visible { outline: 3px solid var(--green); outline-offset: 2px; }
 
-  /* ===== ヘッダー: タイトルウィンドウ風 ===== */
+  /* ===== ヘッダー: クリーム地に手描き風タイトル＋波線 ===== */
   .app-header {
-    background: transparent;
+    background: var(--cream);
     text-align: center;
-    padding: 22px 16px 6px;
+    padding: 30px 16px 6px;
   }
-  .header-box {
-    display: inline-block;
-    background: var(--card);
-    border: 3px solid var(--ink);
-    border-radius: var(--radius);
-    box-shadow: 5px 5px 0 rgba(28, 28, 28, 0.75);
-    padding: 10px 26px 12px;
-  }
+  .header-box { display: inline-block; }
   .app-header .brand {
-    font-family: var(--font-8bit);
-    font-size: 9px;
-    letter-spacing: 0.22em;
-    color: var(--red);
-    margin-bottom: 4px;
+    font-family: var(--font-en);
+    font-size: 12px; font-weight: 800;
+    letter-spacing: 0.4em; text-indent: 0.4em;
+    color: var(--green-deep);
+    margin-bottom: 2px;
   }
   .app-header .title {
-    font-family: var(--font-pixel);
-    font-size: 18px;
-    font-weight: 400;
+    font-family: var(--font-head);
+    font-size: 21px; font-weight: 900;
+    letter-spacing: 0.08em;
     color: var(--ink);
-    line-height: 1.4;
+    line-height: 1.5;
+    padding-bottom: 10px;
+    background: var(--wavy) bottom center / 24px 10px repeat-x;
   }
-  @media (max-width: 480px) { .app-header .title { font-size: 15.5px; } }
+  @media (max-width: 480px) { .app-header .title { font-size: 17px; } }
 
   .container {
     width: 100%;
@@ -135,19 +128,18 @@
     flex: 1;
   }
 
-  /* ===== カード: RPGダイアログウィンドウ風 ===== */
+  /* ===== カード: 黒細枠の大きな角丸（フラット） ===== */
   .card {
-    background: var(--card);
-    border: 3px solid var(--ink);
+    background: var(--paper);
+    border: 2px solid var(--ink);
     border-radius: var(--radius);
-    box-shadow: var(--shadow-hard);
-    padding: 30px 26px;
-    margin-bottom: 26px;
+    padding: 32px 28px;
+    margin-bottom: 24px;
   }
-  @media (max-width: 480px) { .card { padding: 24px 16px; } }
+  @media (max-width: 480px) { .card { padding: 26px 18px; } }
 
   /* 画面切替アニメーション（カードごとに時間差で立ち上がる） */
-  .screen > * { animation: fadeUp 0.5s cubic-bezier(0.22, 1, 0.36, 1) both; }
+  .screen > * { animation: fadeUp 0.55s cubic-bezier(0.22, 1, 0.36, 1) both; }
   .screen > *:nth-child(2) { animation-delay: 0.08s; }
   .screen > *:nth-child(3) { animation-delay: 0.16s; }
   .screen > *:nth-child(4) { animation-delay: 0.24s; }
@@ -155,130 +147,130 @@
   .screen > *:nth-child(6) { animation-delay: 0.40s; }
   .screen > *:nth-child(7) { animation-delay: 0.48s; }
   @keyframes fadeUp {
-    from { opacity: 0; transform: translateY(16px); }
+    from { opacity: 0; transform: translateY(14px); }
     to   { opacity: 1; transform: none; }
   }
 
   h1 {
-    font-family: var(--font-pixel);
-    font-size: 28px; font-weight: 400;
-    color: var(--ink); line-height: 1.45;
+    font-family: var(--font-head);
+    font-size: 27px; font-weight: 900;
+    letter-spacing: 0.06em;
+    color: var(--ink); line-height: 1.5;
     margin-bottom: 12px;
   }
   h2 {
-    font-family: var(--font-pixel);
-    font-size: 21px; font-weight: 400;
+    font-family: var(--font-head);
+    font-size: 20px; font-weight: 900;
+    letter-spacing: 0.1em;
     color: var(--ink);
-    margin-bottom: 12px;
-    position: relative; padding-left: 22px;
+    display: inline-block;
+    margin-bottom: 14px;
+    padding-bottom: 10px;
+    background: var(--wavy) bottom left / 24px 10px repeat-x;
   }
-  h2::before {
-    content: "";
-    position: absolute; left: 0; top: 0.42em;
-    width: 12px; height: 12px;
-    background: var(--red);
-    border: 2px solid var(--ink);
-  }
-  h3 { font-family: var(--font-pixel); font-size: 16.5px; font-weight: 400; color: var(--ink); margin-bottom: 6px; }
+  h3 { font-family: var(--font-head); font-size: 16px; font-weight: 700; letter-spacing: 0.04em; color: var(--ink); margin-bottom: 6px; }
   p.sub { color: var(--text-sub); font-size: 14.5px; }
 
-  /* ===== ボタン: ハードシャドウのブロック風 ===== */
+  /* ===== ボタン: ピル型＋黒細枠 ===== */
   .btn {
     display: inline-block;
-    font-family: var(--font-pixel);
-    font-size: 16.5px;
-    font-weight: 400;
-    padding: 13px 26px;
-    min-height: 50px;
-    border: 3px solid var(--ink);
-    border-radius: 8px;
+    font-family: var(--font-head);
+    font-size: 15.5px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    padding: 14px 28px;
+    min-height: 52px;
+    border: 2px solid var(--ink);
+    border-radius: 999px;
     cursor: pointer;
     background: #fff;
     color: var(--ink);
-    box-shadow: 4px 4px 0 var(--ink);
-    transition: transform 0.08s ease, box-shadow 0.08s ease, opacity 0.15s, background 0.15s;
+    transition: transform 0.15s ease, background 0.15s, opacity 0.15s, box-shadow 0.15s;
   }
-  .btn:hover:not(:disabled) { transform: translate(-1px, -1px); box-shadow: 5px 5px 0 var(--ink); }
-  .btn:active:not(:disabled) { transform: translate(3px, 3px); box-shadow: 1px 1px 0 var(--ink); }
-  .btn-primary { background: var(--red); color: #fff; }
-  .btn-primary:hover:not(:disabled) { background: #f5222d; }
-  .btn-primary:disabled { opacity: 0.35; cursor: not-allowed; box-shadow: 4px 4px 0 rgba(28,28,28,0.4); }
-  .btn-ghost { background: #fff; color: var(--ink); }
-  .btn-ghost:hover { background: var(--select); }
+  .btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 4px 0 rgba(43, 43, 43, 0.25); }
+  .btn:active:not(:disabled) { transform: translateY(1px); box-shadow: none; }
+  .btn-primary { background: var(--green); }
+  .btn-primary:hover:not(:disabled) { background: #7fcc87; }
+  .btn-primary:disabled { opacity: 0.35; cursor: not-allowed; }
+  .btn-ghost { background: #fff; }
+  .btn-ghost:hover { background: var(--cream); }
   .btn-wide { width: 100%; }
 
-  /* ===== トップ画面: キャラが並ぶゲームステージ ===== */
+  /* ===== トップ画面: 丘と空のイラストステージ ===== */
   .hero-sprites {
     position: relative;
     display: flex; justify-content: center; align-items: flex-end;
-    gap: 20px;
-    padding: 26px 12px 30px;
-    margin-bottom: 20px;
-    border: 3px solid var(--ink);
-    border-radius: 8px;
+    gap: 18px;
+    padding: 30px 12px 40px;
+    margin-bottom: 22px;
+    border: 2px solid var(--ink);
+    border-radius: 20px;
     overflow: hidden;
-    /* ドット絵風の空: ハードエッジの雲 */
+    /* やわらかい空と雲 */
     background:
-      radial-gradient(circle at 18% 30%, #ffffff 0 11px, transparent 12px),
-      radial-gradient(circle at 26% 26%, #ffffff 0 14px, transparent 15px),
-      radial-gradient(circle at 33% 32%, #ffffff 0 10px, transparent 11px),
-      radial-gradient(circle at 74% 18%, #ffffff 0 9px, transparent 10px),
-      radial-gradient(circle at 81% 15%, #ffffff 0 12px, transparent 13px),
-      radial-gradient(circle at 88% 20%, #ffffff 0 8px, transparent 9px),
-      linear-gradient(var(--sky), #cdeefc);
+      radial-gradient(26px 15px at 21% 26%, #ffffff 98%, transparent),
+      radial-gradient(36px 18px at 27% 30%, #ffffff 98%, transparent),
+      radial-gradient(22px 13px at 76% 16%, #ffffff 98%, transparent),
+      radial-gradient(32px 16px at 82% 21%, #ffffff 98%, transparent),
+      linear-gradient(var(--sky), #c3daee);
   }
   .hero-sprites::after {
     content: "";
     position: absolute; left: 0; right: 0; bottom: 0;
-    height: 20px;
-    border-top: 3px solid var(--ink);
-    background: linear-gradient(var(--green) 0 9px, #2e8b33 9px 12px, var(--dirt) 12px);
+    height: 34px;
+    /* ふたつの丘 */
+    background:
+      radial-gradient(58% 150% at 20% 115%, var(--hill-3) 59%, transparent 60%),
+      radial-gradient(64% 160% at 82% 118%, var(--hill-2) 60%, transparent 61%),
+      var(--hill-1);
   }
   .hero-sprite {
     position: relative; z-index: 1;
-    margin-bottom: 14px;
-    animation: bob 0.9s steps(2) infinite;
+    margin-bottom: 18px;
+    animation: floaty 3.4s ease-in-out infinite;
   }
-  @keyframes bob {
+  @keyframes floaty {
     0%, 100% { transform: translateY(0); }
-    50%      { transform: translateY(-4px); }
+    50%      { transform: translateY(-6px); }
   }
   @media (max-width: 480px) {
-    .hero-sprites { gap: 10px; }
+    .hero-sprites { gap: 8px; }
     .hero-sprite:nth-child(6) { display: none; }
   }
   .hero-badge {
     display: inline-block;
-    background: var(--red);
-    color: #fff;
-    font-family: var(--font-pixel);
-    font-size: 13px;
-    padding: 4px 14px;
+    background: var(--yellow);
+    color: var(--ink);
+    font-family: var(--font-head);
+    font-size: 13px; font-weight: 700;
+    letter-spacing: 0.1em;
+    padding: 5px 18px;
     border: 2px solid var(--ink);
-    border-radius: 6px;
-    box-shadow: 3px 3px 0 rgba(28, 28, 28, 0.75);
+    border-radius: 999px;
     margin-bottom: 14px;
   }
   .info-list { list-style: none; margin: 18px 0; }
   .info-list li {
-    padding: 10px 0 10px 28px;
+    padding: 10px 0 10px 30px;
     position: relative;
-    border-bottom: 2px dashed var(--line);
+    border-bottom: 2px dotted var(--line);
     font-size: 15px;
   }
   .info-list li::before {
-    content: "▶";
-    position: absolute; left: 2px; top: 10px;
-    color: var(--red);
-    font-size: 13px;
+    content: "";
+    position: absolute; left: 4px; top: 17px;
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    background: var(--green);
+    border: 2px solid var(--ink);
   }
   .notice-box {
-    background: #fff8e1;
+    background: #fff;
     border: 2px solid var(--ink);
-    border-radius: 8px;
-    padding: 14px 16px;
+    border-radius: 18px;
+    padding: 16px 18px;
     font-size: 13.5px;
-    color: #5c4a1e;
+    color: var(--text);
     margin: 16px 0 22px;
   }
 
@@ -289,46 +281,37 @@
   }
   .mode-tab {
     flex: 1;
-    font-family: var(--font-pixel);
-    font-size: 15px;
-    padding: 11px 6px;
-    border: 3px solid var(--ink);
-    border-radius: 8px;
+    font-family: var(--font-head);
+    font-size: 14px; font-weight: 700;
+    letter-spacing: 0.08em;
+    padding: 12px 6px;
+    border: 2px solid var(--ink);
+    border-radius: 999px;
     background: #fff;
     color: var(--text-sub);
     cursor: pointer;
-    box-shadow: 3px 3px 0 rgba(28, 28, 28, 0.75);
-    transition: all 0.1s;
+    transition: all 0.15s;
   }
-  .mode-tab:hover { background: var(--select); color: var(--ink); }
-  .mode-tab.active {
-    background: var(--red); color: #fff;
-    transform: translate(2px, 2px);
-    box-shadow: 1px 1px 0 rgba(28, 28, 28, 0.75);
-  }
+  .mode-tab:hover { background: var(--cream); color: var(--ink); }
+  .mode-tab.active { background: var(--ink); color: #fff; }
 
   .axis-block { margin-bottom: 18px; }
-  .axis-label { font-family: var(--font-pixel); font-size: 14px; color: var(--text-sub); margin-bottom: 6px; }
+  .axis-label { font-family: var(--font-head); font-weight: 700; font-size: 13.5px; color: var(--text-sub); margin-bottom: 6px; }
   .axis-pair { display: flex; gap: 10px; }
   .axis-option {
     flex: 1;
     font-family: inherit;
     text-align: left;
-    padding: 12px 14px;
-    border-radius: 8px;
-    border: 2.5px solid var(--ink);
+    padding: 12px 16px;
+    border-radius: 18px;
+    border: 2px solid var(--ink);
     background: #fff;
     cursor: pointer;
-    box-shadow: 3px 3px 0 rgba(28, 28, 28, 0.5);
-    transition: all 0.1s;
+    transition: all 0.15s;
   }
-  .axis-option:hover { background: #fffbe8; transform: translate(-1px, -1px); box-shadow: 4px 4px 0 rgba(28, 28, 28, 0.5); }
-  .axis-option.selected {
-    background: var(--select);
-    transform: translate(2px, 2px);
-    box-shadow: 1px 1px 0 rgba(28, 28, 28, 0.5);
-  }
-  .axis-option .letter { font-family: var(--font-8bit); font-size: 15px; color: var(--red); }
+  .axis-option:hover { background: var(--cream); transform: translateY(-2px); }
+  .axis-option.selected { background: var(--yellow); }
+  .axis-option .letter { font-family: var(--font-en); font-size: 17px; font-weight: 800; color: var(--ink); }
   .axis-option .desc { font-size: 12.5px; color: var(--text-sub); line-height: 1.5; }
 
   .type-grid {
@@ -340,133 +323,119 @@
   .type-cell {
     font-family: inherit;
     padding: 12px 8px 10px;
-    border-radius: 8px;
-    border: 2.5px solid var(--ink);
+    border-radius: 18px;
+    border: 2px solid var(--ink);
     background: #fff;
     cursor: pointer;
     text-align: center;
-    box-shadow: 3px 3px 0 rgba(28, 28, 28, 0.5);
-    transition: all 0.1s;
+    transition: all 0.15s;
     min-height: 74px;
   }
-  .type-cell:hover { background: #fffbe8; transform: translate(-1px, -1px); box-shadow: 4px 4px 0 rgba(28, 28, 28, 0.5); }
-  .type-cell.selected {
-    background: var(--select);
-    transform: translate(2px, 2px);
-    box-shadow: 1px 1px 0 rgba(28, 28, 28, 0.5);
-  }
-  .type-cell .code { font-family: var(--font-8bit); font-size: 13px; color: var(--red); letter-spacing: 0.04em; }
-  .type-cell .name { font-size: 11.5px; color: var(--text-sub); line-height: 1.45; display: block; margin-top: 4px; }
+  .type-cell:hover { background: var(--cream); transform: translateY(-2px); }
+  .type-cell.selected { background: var(--yellow); }
+  .type-cell .code { font-family: var(--font-en); font-size: 16px; font-weight: 800; color: var(--ink); letter-spacing: 0.06em; }
+  .type-cell .name { font-size: 11.5px; color: var(--text-sub); line-height: 1.45; display: block; margin-top: 2px; }
 
   .selected-type-bar {
     display: flex; align-items: center; justify-content: space-between;
     gap: 12px;
-    background: var(--ink);
-    color: #fff;
-    border-radius: 8px;
-    border: 3px solid var(--ink);
-    box-shadow: inset 0 0 0 2px #fff, 5px 5px 0 rgba(28, 28, 28, 0.5);
-    padding: 14px 18px;
+    background: #fff;
+    border: 2px solid var(--ink);
+    border-radius: 22px;
+    padding: 14px 20px;
     margin-top: 22px;
   }
-  .selected-type-bar .code { font-family: var(--font-8bit); font-size: 17px; letter-spacing: 0.08em; }
-  .selected-type-bar .name { font-family: var(--font-pixel); font-size: 13px; opacity: 0.9; }
-  .selected-type-bar .btn { box-shadow: 3px 3px 0 rgba(255, 255, 255, 0.55); }
+  .selected-type-bar .code { font-family: var(--font-en); font-size: 22px; font-weight: 800; letter-spacing: 0.08em; color: var(--ink); }
+  .selected-type-bar .name { font-size: 13px; color: var(--text-sub); }
 
   /* ===== 質問画面 ===== */
   .progress-wrap { margin-bottom: 22px; }
   .progress-meta {
     display: flex; justify-content: space-between;
-    font-family: var(--font-pixel);
-    font-size: 14px; color: var(--text-sub);
+    font-family: var(--font-head);
+    font-weight: 700;
+    font-size: 13px; color: var(--text-sub);
+    letter-spacing: 0.06em;
     margin-bottom: 6px;
   }
-  /* HPゲージ風プログレスバー */
   .progress-track {
-    height: 16px;
+    height: 14px;
     background: #fff;
-    border: 3px solid var(--ink);
-    border-radius: 6px;
+    border: 2px solid var(--ink);
+    border-radius: 999px;
     overflow: hidden;
   }
   .progress-fill {
-    position: relative;
     height: 100%;
-    background:
-      repeating-linear-gradient(90deg, transparent 0 8px, rgba(255, 255, 255, 0.28) 8px 10px),
-      linear-gradient(#5ecb62 0 45%, var(--green) 45%);
-    transition: width 0.35s steps(6);
+    background: var(--green);
+    border-radius: 999px;
+    transition: width 0.35s ease;
   }
 
   /* 設問の切替アニメーション（key=設問番号で再発火） */
-  .q-anim { animation: qIn 0.25s steps(3) both; }
+  .q-anim { animation: qIn 0.3s ease both; }
   @keyframes qIn {
-    from { opacity: 0; transform: translateX(14px); }
+    from { opacity: 0; transform: translateX(12px); }
     to   { opacity: 1; transform: none; }
   }
 
   .q-category {
     display: inline-block;
-    font-family: var(--font-pixel);
+    font-family: var(--font-head);
+    font-weight: 700;
     font-size: 12.5px;
-    color: var(--red);
+    letter-spacing: 0.06em;
+    color: var(--ink);
     background: #fff;
-    border: 2px solid var(--red);
-    padding: 2px 12px;
-    border-radius: 6px;
+    border: 2px solid var(--ink);
+    padding: 2px 14px;
+    border-radius: 999px;
     margin-bottom: 12px;
   }
   .q-text { font-size: 18px; font-weight: 700; line-height: 1.7; margin-bottom: 24px; min-height: 3.4em; }
   @media (max-width: 480px) { .q-text { font-size: 16.5px; } }
 
-  /* RPGメニュー風の選択肢 */
   .likert { display: flex; flex-direction: column; gap: 10px; }
   .likert-option {
     font-family: inherit;
     display: flex; align-items: center; gap: 14px;
     width: 100%;
-    padding: 12px 16px;
-    min-height: 52px;
-    border-radius: 8px;
-    border: 2.5px solid var(--ink);
+    padding: 12px 18px;
+    min-height: 54px;
+    border-radius: 999px;
+    border: 2px solid var(--ink);
     background: #fff;
     font-size: 15px;
     cursor: pointer;
-    box-shadow: 3px 3px 0 rgba(28, 28, 28, 0.5);
-    transition: all 0.1s;
+    transition: all 0.15s;
     text-align: left;
   }
-  .likert-option:hover { background: #fffbe8; transform: translateX(4px); }
-  .likert-option.selected {
-    background: var(--select);
-    font-weight: 700;
-    transform: translate(2px, 2px);
-    box-shadow: 1px 1px 0 rgba(28, 28, 28, 0.5);
-  }
+  .likert-option:hover { background: var(--cream); transform: translateX(4px); }
+  .likert-option.selected { background: var(--yellow); font-weight: 700; }
   .likert-option .num {
     flex-shrink: 0;
     width: 30px; height: 30px;
-    border-radius: 6px;
+    border-radius: 50%;
     border: 2px solid var(--ink);
     display: flex; align-items: center; justify-content: center;
     background: #fff; color: var(--ink);
-    font-family: var(--font-8bit);
-    font-size: 12px;
-    transition: all 0.1s;
+    font-family: var(--font-en);
+    font-weight: 800; font-size: 14px;
+    transition: all 0.15s;
   }
-  .likert-option.selected .num { background: var(--red); border-color: var(--ink); color: #fff; }
+  .likert-option.selected .num { background: var(--ink); color: #fff; }
 
   .kbd-hint { margin-top: 14px; font-size: 12px; color: var(--text-sub); text-align: center; }
   .kbd-hint kbd {
     display: inline-block;
     min-width: 20px;
-    padding: 1px 5px;
+    padding: 1px 6px;
     border: 2px solid var(--ink);
-    border-bottom-width: 3px;
-    border-radius: 4px;
+    border-radius: 7px;
     background: #fff;
-    font-family: var(--font-8bit);
-    font-size: 9px;
+    font-family: var(--font-en);
+    font-weight: 700;
+    font-size: 11px;
     text-align: center;
   }
   @media (hover: none) { .kbd-hint { display: none; } } /* タッチ端末では非表示 */
@@ -475,66 +444,96 @@
   .quiz-nav .btn { flex: 1; }
   .unanswered-note {
     margin-top: 16px;
-    background: #fff8e1;
+    background: #fff;
     border: 2px solid var(--ink);
-    border-radius: 8px;
+    border-radius: 18px;
     padding: 14px 16px;
     font-size: 13.5px;
-    color: #5c4a1e;
+    color: var(--text);
     line-height: 1.7;
   }
 
-  /* ===== 結果画面: キャラクター表示（ゲームステージ風の額縁） ===== */
+  /* ===== 結果画面: キャラクター表示（丘と空のイラスト額縁） ===== */
   .char-hero {
     text-align: center;
     padding: 10px 0 18px;
-    border-bottom: 2px dashed var(--line);
+    border-bottom: 2px dotted var(--line);
     margin-bottom: 16px;
   }
   .char-frame {
     position: relative;
     display: inline-flex;
-    padding: 26px 40px 34px;
-    border: 3px solid var(--ink);
-    border-radius: 8px;
+    padding: 26px 44px 40px;
+    border: 2px solid var(--ink);
+    border-radius: 24px;
     overflow: hidden;
     background:
-      radial-gradient(circle at 22% 26%, #ffffff 0 10px, transparent 11px),
-      radial-gradient(circle at 30% 22%, #ffffff 0 13px, transparent 14px),
-      radial-gradient(circle at 78% 16%, #ffffff 0 9px, transparent 10px),
-      radial-gradient(circle at 85% 21%, #ffffff 0 11px, transparent 12px),
-      linear-gradient(var(--sky), #cdeefc);
-    box-shadow: 5px 5px 0 rgba(28, 28, 28, 0.75);
+      radial-gradient(24px 14px at 22% 24%, #ffffff 98%, transparent),
+      radial-gradient(32px 16px at 28% 28%, #ffffff 98%, transparent),
+      radial-gradient(20px 12px at 78% 15%, #ffffff 98%, transparent),
+      radial-gradient(28px 14px at 84% 19%, #ffffff 98%, transparent),
+      linear-gradient(var(--sky), #c3daee);
     animation: charPop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both;
   }
   .char-frame::after {
     content: "";
     position: absolute; left: 0; right: 0; bottom: 0;
-    height: 22px;
-    border-top: 3px solid var(--ink);
-    background: linear-gradient(var(--green) 0 10px, #2e8b33 10px 13px, var(--dirt) 13px);
+    height: 30px;
+    background:
+      radial-gradient(58% 150% at 20% 115%, var(--hill-3) 59%, transparent 60%),
+      radial-gradient(64% 160% at 82% 118%, var(--hill-2) 60%, transparent 61%),
+      var(--hill-1);
   }
   .char-frame svg { position: relative; z-index: 1; }
   @keyframes charPop {
-    from { opacity: 0; transform: scale(0.4); }
+    from { opacity: 0; transform: scale(0.5); }
     to   { opacity: 1; transform: scale(1); }
   }
-  .char-lead { font-family: var(--font-pixel); font-size: 13.5px; color: var(--text-sub); margin-top: 14px; }
+  /* 「あなたの回答から見えたのは…」を黄色い吹き出しに */
+  .char-lead {
+    position: relative;
+    display: block;
+    width: fit-content;
+    margin-left: auto;
+    margin-right: auto;
+    font-family: var(--font-head);
+    font-weight: 700;
+    font-size: 13.5px;
+    letter-spacing: 0.06em;
+    color: var(--ink);
+    background: var(--yellow);
+    border: 2px solid var(--ink);
+    border-radius: 999px;
+    padding: 5px 20px;
+    margin-top: 18px;
+  }
+  .char-lead::after {
+    content: "";
+    position: absolute;
+    top: -9px; left: 50%;
+    width: 10px; height: 10px;
+    background: var(--yellow);
+    border-left: 2px solid var(--ink);
+    border-top: 2px solid var(--ink);
+    transform: translateX(-50%) rotate(45deg);
+  }
   .char-name {
-    font-family: var(--font-pixel);
-    font-size: 25px; font-weight: 400; color: var(--ink);
-    line-height: 1.4; margin: 2px 0 8px;
+    font-family: var(--font-head);
+    font-size: 24px; font-weight: 900;
+    letter-spacing: 0.04em;
+    color: var(--ink);
+    line-height: 1.45; margin: 10px 0 8px;
   }
   @media (max-width: 480px) { .char-name { font-size: 20px; } }
   .char-type-badge {
     display: inline-block;
-    background: var(--red); color: #fff;
-    font-family: var(--font-pixel);
-    font-size: 13px;
-    padding: 3px 14px;
+    background: var(--green); color: var(--ink);
+    font-family: var(--font-head);
+    font-size: 13px; font-weight: 700;
+    letter-spacing: 0.06em;
+    padding: 3px 16px;
     border: 2px solid var(--ink);
-    border-radius: 6px;
-    box-shadow: 3px 3px 0 rgba(28, 28, 28, 0.75);
+    border-radius: 999px;
     margin-bottom: 12px;
   }
   .char-copy { font-size: 14px; color: var(--text-sub); line-height: 1.8; }
@@ -542,73 +541,65 @@
     display: inline-block;
     margin-top: 10px;
     font-size: 12px;
-    color: #17707f;
-    background: #dff3f6;
-    border: 2px solid #17707f;
-    padding: 4px 14px;
-    border-radius: 6px;
+    color: var(--text);
+    background: #fff;
+    border: 2px solid var(--ink);
+    padding: 4px 16px;
+    border-radius: 999px;
   }
 
-  /* ===== 結果画面: 円形フィットゲージ（スコア表示はレトロ数字） ===== */
+  /* ===== 結果画面: 円形フィットゲージ ===== */
   .fit-gauge-wrap { text-align: center; padding: 8px 0 4px; }
-  .fit-gauge-wrap .sub { font-family: var(--font-pixel); font-size: 15px; }
+  .fit-gauge-wrap .sub { font-family: var(--font-head); font-weight: 700; letter-spacing: 0.06em; }
   .fit-ring-wrap { position: relative; width: 190px; margin: 14px auto 8px; }
   .fit-ring { display: block; width: 100%; transform: rotate(-90deg); }
-  .ring-bg { fill: none; stroke: #e6eaed; stroke-width: 13; }
-  .ring-fg { fill: none; stroke-width: 13; stroke-linecap: butt; }
+  .ring-bg { fill: none; stroke: #e9e9dd; stroke-width: 13; }
+  .ring-fg { fill: none; stroke-width: 13; stroke-linecap: round; }
   .fit-ring-center {
     position: absolute; inset: 0;
     display: flex; align-items: baseline; justify-content: center;
-    padding-top: 76px;
+    padding-top: 70px;
   }
   .fit-ring-center .num {
-    font-family: var(--font-8bit);
-    font-size: 36px;
+    font-family: var(--font-en);
+    font-size: 50px; font-weight: 800;
     color: var(--ink); line-height: 1;
   }
-  .fit-ring-center .unit { font-family: var(--font-8bit); font-size: 14px; color: var(--text-sub); margin-left: 4px; }
+  .fit-ring-center .unit { font-family: var(--font-en); font-weight: 700; font-size: 18px; color: var(--text-sub); margin-left: 3px; }
 
   .chart-box { position: relative; width: 100%; max-width: 420px; margin: 0 auto; }
   .dept-row {
-    padding: 14px 16px;
-    border-radius: 8px;
-    border: 2.5px solid var(--ink);
+    padding: 14px 18px;
+    border-radius: 20px;
+    border: 2px solid var(--ink);
     background: #fff;
-    box-shadow: 3px 3px 0 rgba(28, 28, 28, 0.4);
     margin-bottom: 12px;
   }
-  .dept-row.best {
-    background: var(--select);
-    box-shadow: 4px 4px 0 rgba(28, 28, 28, 0.75);
-  }
+  .dept-row.best { background: var(--yellow); }
   .dept-row .dept-head {
     display: flex; align-items: center; justify-content: space-between;
     gap: 10px; margin-bottom: 2px;
   }
-  .dept-row .dept-name { font-weight: 800; color: var(--ink); font-size: 15px; }
-  .dept-row .dept-score { font-family: var(--font-8bit); font-size: 15px; color: var(--red); flex-shrink: 0; }
+  .dept-row .dept-name { font-family: var(--font-head); font-weight: 700; color: var(--ink); font-size: 15px; }
+  .dept-row .dept-score { font-family: var(--font-en); font-weight: 800; font-size: 19px; color: var(--ink); flex-shrink: 0; }
   .dept-bar {
     height: 10px;
     background: #fff;
     border: 2px solid var(--ink);
-    border-radius: 4px;
+    border-radius: 999px;
     overflow: hidden;
     margin: 6px 0 8px;
   }
-  .dept-bar-fill {
-    height: 100%;
-    background:
-      repeating-linear-gradient(90deg, transparent 0 6px, rgba(255, 255, 255, 0.3) 6px 8px),
-      var(--red);
-  }
-  .dept-row .dept-comment { font-size: 13px; color: var(--text-sub); line-height: 1.6; }
+  .dept-bar-fill { height: 100%; background: var(--coral); border-radius: 999px; }
+  .dept-row .dept-comment { font-size: 13px; color: var(--text-sub); line-height: 1.65; }
   .best-badge {
     display: inline-block;
-    background: var(--yellow); color: var(--ink);
-    font-family: var(--font-pixel);
-    font-size: 11.5px;
+    background: var(--coral); color: #fff;
+    font-family: var(--font-en);
+    font-size: 11px; font-weight: 800;
+    letter-spacing: 0.08em;
     border: 2px solid var(--ink);
-    padding: 1px 9px; border-radius: 5px;
+    padding: 1px 10px; border-radius: 999px;
     margin-left: 8px; vertical-align: 2px;
   }
   .profile-section { margin-bottom: 16px; }
@@ -621,13 +612,12 @@
   .chip {
     display: inline-flex; align-items: center; gap: 6px;
     font-size: 13px; font-weight: 700;
-    padding: 5px 13px;
-    border-radius: 6px;
+    padding: 5px 15px;
+    border-radius: 999px;
     border: 2px solid var(--ink);
-    box-shadow: 2px 2px 0 rgba(28, 28, 28, 0.5);
   }
-  .chip-strong { background: #ffe3e5; color: var(--red-dark); }
-  .chip-grow   { background: #e2f4e3; color: #22703a; }
+  .chip-strong { background: #f8ddd6; color: #a4443d; }
+  .chip-grow   { background: #dff0d9; color: #33683a; }
 
   .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
   .detail-table {
@@ -638,31 +628,32 @@
   }
   .detail-table th {
     text-align: left;
-    font-family: var(--font-pixel);
+    font-family: var(--font-head);
+    font-weight: 700;
     font-size: 12.5px;
+    letter-spacing: 0.06em;
     color: var(--text-sub);
-    border-bottom: 3px solid var(--ink);
+    border-bottom: 2px solid var(--ink);
     padding: 8px 10px;
     white-space: nowrap;
   }
   .detail-table td {
     padding: 10px;
-    border-bottom: 2px solid var(--line);
+    border-bottom: 2px dotted var(--line);
     vertical-align: top;
     line-height: 1.6;
   }
-  .detail-table td.score-cell { font-family: var(--font-8bit); font-size: 12px; color: var(--ink); white-space: nowrap; }
+  .detail-table td.score-cell { font-family: var(--font-en); font-weight: 800; font-size: 14px; color: var(--ink); white-space: nowrap; }
   .band-badge {
     display: inline-block;
-    font-family: var(--font-pixel);
-    font-size: 12px;
+    font-size: 12px; font-weight: 700;
     border: 2px solid var(--ink);
-    padding: 1px 9px; border-radius: 5px;
+    padding: 1px 11px; border-radius: 999px;
     white-space: nowrap;
   }
-  .band-strong { background: #ffe3e5; color: var(--red-dark); }
-  .band-stable { background: #ddf1fb; color: #16607e; }
-  .band-grow   { background: #e2f4e3; color: #22703a; }
+  .band-strong { background: #f8ddd6; color: #a4443d; }
+  .band-stable { background: #dcebf6; color: #2f5f80; }
+  .band-grow   { background: #dff0d9; color: #33683a; }
 
   /* スマホでは表を横スクロールさせず、1行＝1カードの縦積みに切り替える */
   @media (max-width: 560px) {
@@ -670,11 +661,11 @@
     .detail-table thead { display: none; }
     .detail-table tbody tr {
       display: block;
-      border: 2.5px solid var(--ink);
-      border-radius: 8px;
-      box-shadow: 3px 3px 0 rgba(28, 28, 28, 0.4);
-      padding: 12px 14px;
+      border: 2px solid var(--ink);
+      border-radius: 18px;
+      padding: 12px 16px;
       margin-bottom: 12px;
+      background: #fff;
     }
     .detail-table td {
       display: block;
@@ -687,59 +678,59 @@
     width: 90px; height: 9px;
     background: #fff;
     border: 2px solid var(--ink);
-    border-radius: 3px;
+    border-radius: 999px;
     overflow: hidden; display: inline-block;
     vertical-align: 1px; margin-left: 8px;
   }
-  .mini-bar-fill { height: 100%; background: var(--red); }
+  .mini-bar-fill { height: 100%; background: var(--coral); border-radius: 999px; }
 
   .disclaimer {
-    background: #fff8e1;
-    border: 2px dashed var(--ink);
-    border-radius: 8px;
-    padding: 16px 18px;
+    background: #fff;
+    border: 2px solid var(--ink);
+    border-radius: 18px;
+    padding: 16px 20px;
     font-size: 13.5px;
     color: var(--text);
     line-height: 1.8;
   }
-  .disclaimer strong { font-family: var(--font-pixel); color: var(--ink); display: block; margin-bottom: 4px; }
+  .disclaimer strong { font-family: var(--font-head); color: var(--ink); display: block; margin-bottom: 4px; }
 
   .result-actions { display: flex; gap: 14px; }
   .result-actions .btn { flex: 1; }
 
-  /* ===== フッター: ドット絵の地面にキャラが立つ ===== */
-  .app-footer { margin-top: 34px; padding: 0; }
+  /* ===== フッター: 丘のイラストにキャラが立つ ===== */
+  .app-footer { margin-top: 40px; padding: 0; }
   .ground-sprites {
     display: flex; justify-content: center; align-items: flex-end;
-    gap: 30px;
-    margin-bottom: -3px;
+    gap: 34px;
+    margin-bottom: -6px;
     position: relative; z-index: 1;
   }
-  .ground-sprite { animation: bob 0.9s steps(2) infinite; }
+  .ground-sprite { animation: floaty 3.4s ease-in-out infinite; }
   .ground-scene {
-    border-top: 4px solid var(--ink);
     background:
-      repeating-linear-gradient(90deg, transparent 0 10px, rgba(0, 0, 0, 0.07) 10px 20px),
-      linear-gradient(var(--green) 0 16px, #2e8b33 16px 20px, var(--dirt) 20px);
-    padding: 30px 16px 20px;
+      radial-gradient(55% 170% at 16% 118%, var(--hill-3) 59%, transparent 60%),
+      radial-gradient(60% 180% at 86% 120%, var(--hill-2) 60%, transparent 61%),
+      var(--hill-1);
+    padding: 36px 16px 24px;
     text-align: center;
   }
   .ground-scene .copyright {
-    font-family: var(--font-pixel);
+    font-family: var(--font-head);
+    font-weight: 700;
     font-size: 12.5px;
-    color: #f7ecd8;
-    text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.45);
+    letter-spacing: 0.04em;
+    color: #2f5233;
   }
 
   /* ===== 印刷 / PDF保存用（結果画面を想定） ===== */
   @media print {
     body { background: #fff; font-size: 13px; }
-    .card { box-shadow: none; border: 2px solid #333; break-inside: avoid; margin-bottom: 14px; }
+    .card { border: 2px solid #333; break-inside: avoid; margin-bottom: 14px; }
     .screen > *, .char-frame { animation: none !important; }
-    .header-box { box-shadow: none; }
     .result-actions, .quiz-nav, .ground-sprites { display: none !important; }
-    .ground-scene { background: none; border: none; padding: 8px; }
-    .ground-scene .copyright { color: #555; text-shadow: none; }
+    .ground-scene { background: none; padding: 8px; }
+    .ground-scene .copyright { color: #555; }
   }
 </style>
 </head>
@@ -1655,6 +1646,296 @@ function PixelSprite({ grid, palette, size }) {
   );
 }
 
+/* ============================================================
+   ▼ イラスト調キャラクター（手描き風のゆるいSVGイラスト）
+   丸いからだ＋シンプルな顔＋動物ごとの特徴パーツで16種を描き分ける。
+   ※CHARACTERSのgrid/palette（ドット絵）はレトロ版デザイン用に残している。
+   ============================================================ */
+const OL = "#2b2b2b"; // 手描き風の輪郭色
+
+/* 共通のからだ（たまご型のブロブ） */
+const BLOB = "M60 18 C85 18 101 39 101 65 C101 92 83 107 60 107 C37 107 19 92 19 65 C19 39 35 18 60 18 Z";
+
+/* 共通の顔パーツ（目・鼻・口・ほっぺ） */
+function CFace({ ex = 13, ey = 58, mouthY = 72, mouth = true, nose = null, blush = true }) {
+  return (
+    <g>
+      <circle cx={60 - ex} cy={ey} r="3.5" fill={OL} />
+      <circle cx={60 + ex} cy={ey} r="3.5" fill={OL} />
+      {nose && <circle cx="60" cy={mouthY - 5} r="3" fill={nose} />}
+      {mouth && (
+        <path d={`M54 ${mouthY} Q60 ${mouthY + 5} 66 ${mouthY}`} fill="none"
+          stroke={OL} strokeWidth="2.6" strokeLinecap="round" />
+      )}
+      {blush && (
+        <g fill="#f2a9a2" opacity="0.8">
+          <circle cx={60 - ex - 13} cy={ey + 12} r="5" />
+          <circle cx={60 + ex + 13} cy={ey + 12} r="5" />
+        </g>
+      )}
+    </g>
+  );
+}
+
+const CHARA_ART = {
+  /* カメ金庫番: 深緑の甲羅＋薄緑の顔 */
+  kame: (
+    <g>
+      <g stroke={OL} strokeWidth="3">
+        <path d={BLOB} fill="#639b60" />
+        <circle cx="60" cy="65" r="33" fill="#b9dba4" />
+      </g>
+      <CFace ex={11} ey={60} mouthY={71} />
+    </g>
+  ),
+  /* ポチ主任: 垂れ耳＋赤い首輪 */
+  pochi: (
+    <g>
+      <g stroke={OL} strokeWidth="3">
+        <path d="M24 34 Q10 60 22 74 Q34 78 36 58 Q37 40 24 34 Z" fill="#a9743f" />
+        <path d="M96 34 Q110 60 98 74 Q86 78 84 58 Q83 40 96 34 Z" fill="#a9743f" />
+        <path d={BLOB} fill="#e6c08b" />
+        <ellipse cx="60" cy="77" rx="17" ry="12" fill="#fdf8ec" />
+        <path d="M36 97 Q60 107 84 97" fill="none" stroke="#d95f52" strokeWidth="7" strokeLinecap="round" />
+      </g>
+      <CFace ex={14} ey={59} mouthY={78} nose={OL} />
+    </g>
+  ),
+  /* フクロウ和尚: 耳羽＋大きな目＋くちばし */
+  fukurou: (
+    <g>
+      <g stroke={OL} strokeWidth="3">
+        <path d="M30 26 L36 8 L46 22 Z" fill="#b08b5e" />
+        <path d="M90 26 L84 8 L74 22 Z" fill="#b08b5e" />
+        <path d={BLOB} fill="#b08b5e" />
+        <circle cx="46" cy="57" r="12" fill="#fdf8ec" />
+        <circle cx="74" cy="57" r="12" fill="#fdf8ec" />
+        <path d="M53 69 L60 80 L67 69 Z" fill="#eec34f" />
+        <path d="M38 92 Q60 100 82 92" fill="none" strokeWidth="2.5" />
+      </g>
+      <circle cx="46" cy="57" r="4.4" fill={OL} />
+      <circle cx="74" cy="57" r="4.4" fill={OL} />
+      <g fill="#f2a9a2" opacity="0.8">
+        <circle cx="30" cy="73" r="5" /><circle cx="90" cy="73" r="5" />
+      </g>
+    </g>
+  ),
+  /* クロネコ参謀: とがり耳＋金の目＋ひげ */
+  kuroneko: (
+    <g>
+      <g stroke={OL} strokeWidth="3">
+        <path d="M28 34 L32 8 L48 24 Z" fill="#565c6e" />
+        <path d="M92 34 L88 8 L72 24 Z" fill="#565c6e" />
+        <path d={BLOB} fill="#565c6e" />
+      </g>
+      <circle cx="47" cy="58" r="5.5" fill="#f4d35e" /><circle cx="47" cy="58" r="2.4" fill={OL} />
+      <circle cx="73" cy="58" r="5.5" fill="#f4d35e" /><circle cx="73" cy="58" r="2.4" fill={OL} />
+      <path d="M57 69 L63 69 L60 73 Z" fill="#f2a9a2" />
+      <path d="M54 78 Q60 83 66 78" fill="none" stroke={OL} strokeWidth="2.6" strokeLinecap="round" />
+      <g stroke={OL} strokeWidth="2" strokeLinecap="round">
+        <path d="M20 62 L33 64" /><path d="M20 72 L33 69" />
+        <path d="M100 62 L87 64" /><path d="M100 72 L87 69" />
+      </g>
+    </g>
+  ),
+  /* ビーバー棟梁: 黄色ヘルメット＋前歯 */
+  beaver: (
+    <g>
+      <g stroke={OL} strokeWidth="3">
+        <path d={BLOB} fill="#a97c50" />
+        <ellipse cx="60" cy="76" rx="16" ry="12" fill="#c99e6f" />
+        <path d="M36 30 a24 20 0 0 1 48 0 Z" fill="#f4d35e" />
+        <rect x="28" y="28" width="64" height="9" rx="4.5" fill="#f4d35e" />
+        <rect x="53" y="72" width="14" height="12" rx="2.5" fill="#fdf8ec" />
+      </g>
+      <line x1="60" y1="73" x2="60" y2="83" stroke={OL} strokeWidth="2" />
+      <CFace ex={14} ey={56} mouthY={72} mouth={false} nose={OL} />
+    </g>
+  ),
+  /* アトリエうさぎ: 長い耳＋コーラルのベレー帽 */
+  usagi: (
+    <g>
+      <g stroke={OL} strokeWidth="3">
+        <rect x="34" y="2" width="16" height="38" rx="8" fill="#fdf8ec" />
+        <rect x="70" y="2" width="16" height="38" rx="8" fill="#fdf8ec" />
+        <rect x="39" y="8" width="6" height="24" rx="3" fill="#f2b1ac" stroke="none" />
+        <rect x="75" y="8" width="6" height="24" rx="3" fill="#f2b1ac" stroke="none" />
+        <path d={BLOB} fill="#fdf8ec" />
+        <circle cx="40" cy="27" r="11" fill="#e0716a" />
+      </g>
+      <CFace ex={12} ey={58} mouthY={70} nose="#f2a9a2" />
+    </g>
+  ),
+  /* ふわふわ羊: もこもこ＋タンの顔 */
+  hitsuji: (
+    <g>
+      <g stroke={OL} strokeWidth="3">
+        <g fill="#f3ecd7">
+          <circle cx="34" cy="34" r="13" /><circle cx="49" cy="24" r="13" />
+          <circle cx="66" cy="22" r="13" /><circle cx="82" cy="30" r="13" />
+        </g>
+        <path d={BLOB} fill="#f3ecd7" />
+        <ellipse cx="24" cy="56" rx="9" ry="6" fill="#e0b184" transform="rotate(-18 24 56)" />
+        <ellipse cx="96" cy="56" rx="9" ry="6" fill="#e0b184" transform="rotate(18 96 56)" />
+        <ellipse cx="60" cy="68" rx="26" ry="23" fill="#e8bd8d" />
+      </g>
+      <CFace ex={11} ey={62} mouthY={74} />
+    </g>
+  ),
+  /* ペンギン博士: 白いおなか＋丸メガネ */
+  penguin: (
+    <g>
+      <g stroke={OL} strokeWidth="3">
+        <path d={BLOB} fill="#5b6880" />
+        <ellipse cx="60" cy="79" rx="27" ry="24" fill="#fdf8ec" />
+        <path d="M52 64 Q60 72 68 64 Q60 57 52 64 Z" fill="#eec34f" />
+      </g>
+      <g fill="rgba(255,255,255,0.55)" stroke={OL} strokeWidth="2.6">
+        <circle cx="45" cy="54" r="9.5" />
+        <circle cx="75" cy="54" r="9.5" />
+      </g>
+      <line x1="54.5" y1="54" x2="65.5" y2="54" stroke={OL} strokeWidth="2.6" />
+      <circle cx="45" cy="54" r="3.4" fill={OL} />
+      <circle cx="75" cy="54" r="3.4" fill={OL} />
+    </g>
+  ),
+  /* ハヤブサ営業: キリッと眉＋赤スカーフ */
+  hayabusa: (
+    <g>
+      <g stroke={OL} strokeWidth="3">
+        <path d={BLOB} fill="#93aec4" />
+        <path d="M50 60 Q60 52 70 60 L60 72 Z" fill="#eec34f" />
+        <path d="M34 96 Q60 106 86 96" fill="none" stroke="#d95f52" strokeWidth="7" strokeLinecap="round" />
+      </g>
+      <g stroke={OL} strokeWidth="3" strokeLinecap="round">
+        <path d="M38 47 L50 51" /><path d="M82 47 L70 51" />
+      </g>
+      <circle cx="46" cy="56" r="3.5" fill={OL} />
+      <circle cx="74" cy="56" r="3.5" fill={OL} />
+      <g fill="#f2a9a2" opacity="0.8">
+        <circle cx="31" cy="68" r="5" /><circle cx="89" cy="68" r="5" />
+      </g>
+    </g>
+  ),
+  /* ごきげんインコ: 頭の羽＋オレンジのくちばし */
+  inko: (
+    <g>
+      <g stroke={OL} strokeWidth="3">
+        <path d="M60 18 Q54 6 44 8" fill="none" strokeLinecap="round" />
+        <circle cx="43" cy="8" r="4.5" fill="#7fbf7a" />
+        <path d={BLOB} fill="#7fbf7a" />
+        <path d="M52 60 Q60 54 68 60 Q60 74 52 60 Z" fill="#e8996a" />
+      </g>
+      <circle cx="45" cy="55" r="3.5" fill={OL} />
+      <circle cx="75" cy="55" r="3.5" fill={OL} />
+      <g fill="#f2a9a2" opacity="0.9">
+        <circle cx="31" cy="66" r="6.5" /><circle cx="89" cy="66" r="6.5" />
+      </g>
+    </g>
+  ),
+  /* アイデアリス: 大きなしっぽ＋まるい耳 */
+  risu: (
+    <g>
+      <g stroke={OL} strokeWidth="3">
+        <path d="M86 92 Q112 80 108 50 Q104 28 84 26 Q98 44 90 64 Q84 78 76 84 Z" fill="#c98a54" />
+        <circle cx="34" cy="26" r="10" fill="#e0a56e" />
+        <circle cx="86" cy="26" r="10" fill="#e0a56e" />
+        <path d={BLOB} fill="#e0a56e" />
+        <ellipse cx="60" cy="76" rx="15" ry="11" fill="#f6dfc0" />
+      </g>
+      <CFace ex={14} ey={58} mouthY={77} nose={OL} />
+    </g>
+  ),
+  /* キツネ軍略家: 大きなとがり耳＋白いマズル */
+  kitsune: (
+    <g>
+      <g stroke={OL} strokeWidth="3">
+        <path d="M24 40 L26 8 L48 24 Z" fill="#e8996a" />
+        <path d="M96 40 L94 8 L72 24 Z" fill="#e8996a" />
+        <path d={BLOB} fill="#e8996a" />
+        <ellipse cx="60" cy="80" rx="22" ry="15" fill="#fdf8ec" />
+      </g>
+      <CFace ex={14} ey={58} mouthY={82} nose={OL} />
+    </g>
+  ),
+  /* ゴリラ現場監督: 黄色ヘルメット＋グレーの顔 */
+  gorilla: (
+    <g>
+      <g stroke={OL} strokeWidth="3">
+        <path d={BLOB} fill="#787f87" />
+        <ellipse cx="60" cy="72" rx="27" ry="22" fill="#a7adb4" />
+        <path d="M36 32 a24 20 0 0 1 48 0 Z" fill="#f4d35e" />
+        <rect x="28" y="30" width="64" height="9" rx="4.5" fill="#f4d35e" />
+      </g>
+      <g stroke={OL} strokeWidth="3" strokeLinecap="round">
+        <path d="M46 52 L56 52" /><path d="M64 52 L74 52" />
+      </g>
+      <CFace ex={12} ey={61} mouthY={81} nose={OL} blush={false} />
+    </g>
+  ),
+  /* きくばりパンダ: 黒耳＋アイパッチ＋赤い蝶ネクタイ */
+  panda: (
+    <g>
+      <g stroke={OL} strokeWidth="3">
+        <circle cx="30" cy="26" r="12" fill="#3a3a3a" />
+        <circle cx="90" cy="26" r="12" fill="#3a3a3a" />
+        <path d={BLOB} fill="#fdf8ec" />
+        <path d="M46 92 L58 98 L46 104 Z" fill="#d95f52" />
+        <path d="M74 92 L62 98 L74 104 Z" fill="#d95f52" />
+        <circle cx="60" cy="98" r="4" fill="#d95f52" />
+      </g>
+      <ellipse cx="45" cy="57" rx="9" ry="11" fill="#3a3a3a" transform="rotate(-12 45 57)" />
+      <ellipse cx="75" cy="57" rx="9" ry="11" fill="#3a3a3a" transform="rotate(12 75 57)" />
+      <circle cx="45" cy="56" r="3.2" fill="#fff" />
+      <circle cx="75" cy="56" r="3.2" fill="#fff" />
+      <circle cx="60" cy="70" r="3" fill={OL} />
+      <path d="M54 76 Q60 81 66 76" fill="none" stroke={OL} strokeWidth="2.6" strokeLinecap="round" />
+    </g>
+  ),
+  /* コーチ熊: まる耳＋青いキャップ */
+  kuma: (
+    <g>
+      <g stroke={OL} strokeWidth="3">
+        <circle cx="30" cy="28" r="11" fill="#a97c50" />
+        <circle cx="90" cy="28" r="11" fill="#a97c50" />
+        <path d={BLOB} fill="#a97c50" />
+        <ellipse cx="60" cy="76" rx="16" ry="12" fill="#d9b285" />
+        <path d="M38 32 a22 18 0 0 1 44 0 Z" fill="#5b8bbd" />
+        <rect x="56" y="27" width="34" height="8" rx="4" fill="#5b8bbd" />
+      </g>
+      <CFace ex={14} ey={58} mouthY={78} nose={OL} />
+    </g>
+  ),
+  /* ライオン社長候補: たてがみ＋王冠 */
+  lion: (
+    <g>
+      <g stroke={OL} strokeWidth="3">
+        <g fill="#d98a4b">
+          <circle cx="26" cy="42" r="13" /><circle cx="20" cy="66" r="13" />
+          <circle cx="26" cy="88" r="13" /><circle cx="94" cy="42" r="13" />
+          <circle cx="100" cy="66" r="13" /><circle cx="94" cy="88" r="13" />
+          <circle cx="40" cy="24" r="13" /><circle cx="60" cy="17" r="13" /><circle cx="80" cy="24" r="13" />
+        </g>
+        <path d={BLOB} fill="#e6b566" />
+        <ellipse cx="60" cy="76" rx="16" ry="12" fill="#f2d8a8" />
+        <path d="M48 18 L52 5 L58 13 L60 3 L62 13 L68 5 L72 18 Z" fill="#f4d35e" />
+      </g>
+      <CFace ex={14} ey={58} mouthY={78} nose={OL} />
+    </g>
+  ),
+};
+
+/* --- イラスト調キャラクターの描画コンポーネント --- */
+function CharaSprite({ chara, size }) {
+  return (
+    <svg viewBox="0 0 120 120" width={size} height={size} aria-hidden="true"
+      style={{ display: "block", margin: "0 auto", overflow: "visible" }}
+      strokeLinejoin="round" strokeLinecap="round">
+      {CHARA_ART[chara]}
+    </svg>
+  );
+}
+
 /* --- カウントアップ演出（結果画面のスコア表示用） --- */
 function useCountUp(target, duration = 1100) {
   const [val, setVal] = useState(0);
@@ -1686,8 +1967,8 @@ function FitGauge({ score }) {
       <svg className="fit-ring" viewBox="0 0 200 200" aria-hidden="true">
         <defs>
           <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#e60012" />
-            <stop offset="100%" stopColor="#ff8a00" />
+            <stop offset="0%" stopColor="#e0716a" />
+            <stop offset="100%" stopColor="#f4b13e" />
           </linearGradient>
         </defs>
         <circle className="ring-bg" cx="100" cy="100" r={R} />
@@ -1712,7 +1993,7 @@ function TopScreen({ onStart, savedProgress, onResume }) {
         <div className="hero-sprites" aria-hidden="true">
           {teaser.map((k, i) => (
             <div className="hero-sprite" key={k} style={{ animationDelay: `${i * 0.4}s` }}>
-              <PixelSprite grid={CHARACTERS[k].grid} palette={CHARACTERS[k].palette} size={46} />
+              <CharaSprite chara={k} size={56} />
             </div>
           ))}
         </div>
@@ -1949,10 +2230,10 @@ function DeptRadarChart({ deptScores }) {
         datasets: [{
           label: "部署別適性スコア",
           data: deptKeys.map(k => deptScores[k]),
-          backgroundColor: "rgba(230, 0, 18, 0.16)",
-          borderColor: "#e60012",
+          backgroundColor: "rgba(224, 113, 106, 0.2)",
+          borderColor: "#e0716a",
           borderWidth: 2.5,
-          pointBackgroundColor: "#1c1c1c",
+          pointBackgroundColor: "#2b2b2b",
           pointRadius: 5,
         }],
       },
@@ -1962,10 +2243,10 @@ function DeptRadarChart({ deptScores }) {
         scales: {
           r: {
             min: 0, max: 100,
-            ticks: { stepSize: 20, backdropColor: "transparent", color: "#5b6770" },
-            grid: { color: "#dfe5e8" },
-            angleLines: { color: "#dfe5e8" },
-            pointLabels: { font: { size: 13, family: "DotGothic16" }, color: "#1c1c1c" },
+            ticks: { stepSize: 20, backdropColor: "transparent", color: "#6b6f5e" },
+            grid: { color: "#e2e2d4" },
+            angleLines: { color: "#e2e2d4" },
+            pointLabels: { font: { size: 12.5, family: "Zen Kaku Gothic New", weight: "700" }, color: "#2b2b2b" },
           },
         },
         plugins: { legend: { display: false } },
@@ -1993,11 +2274,11 @@ function CategoryBarChart({ catDisplay }) {
           label: "カテゴリスコア",
           data: keys.map(k => catDisplay[k]),
           backgroundColor: keys.map(k =>
-            catDisplay[k] >= 75 ? "rgba(230,0,18,0.8)" :
-            catDisplay[k] >= 60 ? "rgba(41,171,226,0.85)" : "rgba(67,176,71,0.85)"),
-          borderColor: "#1c1c1c",
+            catDisplay[k] >= 75 ? "rgba(224,113,106,0.9)" :
+            catDisplay[k] >= 60 ? "rgba(110,193,119,0.9)" : "rgba(238,195,79,0.9)"),
+          borderColor: "#2b2b2b",
           borderWidth: 2,
-          borderRadius: 3,
+          borderRadius: 9,
           barThickness: 18,
         }],
       },
@@ -2006,8 +2287,8 @@ function CategoryBarChart({ catDisplay }) {
         responsive: true,
         maintainAspectRatio: false,
         scales: {
-          x: { min: 0, max: 100, ticks: { stepSize: 20, color: "#5b6770" }, grid: { color: "#dfe5e8" } },
-          y: { ticks: { font: { size: 13, family: "DotGothic16" }, color: "#1c1c1c" }, grid: { display: false } },
+          x: { min: 0, max: 100, ticks: { stepSize: 20, color: "#6b6f5e" }, grid: { color: "#e2e2d4" } },
+          y: { ticks: { font: { size: 12.5, family: "Zen Kaku Gothic New", weight: "700" }, color: "#2b2b2b" }, grid: { display: false } },
         },
         plugins: { legend: { display: false } },
       },
@@ -2050,7 +2331,7 @@ function ResultScreen({ type, questions, answers, onRestart }) {
         <h2>診断結果</h2>
         <div className="char-hero">
           <div className="char-frame">
-            <PixelSprite grid={chara.grid} palette={chara.palette} size={132} />
+            <CharaSprite chara={chara.key} size={140} />
           </div>
           <div className="char-lead">あなたの回答から見えたのは…</div>
           <div className="char-name">『{chara.name}』</div>
@@ -2278,8 +2559,8 @@ function App() {
         {/* ドット絵の地面にキャラクターが立つゲーム風フッター */}
         <div className="ground-sprites" aria-hidden="true">
           {["pochi", "kame", "inko", "risu"].map((k, i) => (
-            <div className="ground-sprite" key={k} style={{ animationDelay: `${i * 0.25}s` }}>
-              <PixelSprite grid={CHARACTERS[k].grid} palette={CHARACTERS[k].palette} size={42} />
+            <div className="ground-sprite" key={k} style={{ animationDelay: `${i * 0.4}s` }}>
+              <CharaSprite chara={k} size={50} />
             </div>
           ))}
         </div>
