@@ -51,7 +51,8 @@
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <!-- 結果シートのPDF生成（スマホ対応のダウンロード用: html2canvas + jsPDF 同梱） -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <!-- Webフォント: 見出し=Zen Kaku Gothic New / 本文=Noto Sans JP / 英字数字=Raleway -->
 <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -3018,11 +3019,12 @@ function PrintSheet({ type, profile, chara, cultureFit, deptScores, bestDept, ca
 /* 結果シートをA4一枚のPDFとしてダウンロードする（スマホでも動く）。
    モバイルSafari等では画面外(left:-10000px)に置いた要素のキャプチャが
    白紙・欠けになるため、「生成中」の白いオーバーレイの上にシートを
-   実寸(733px)で実際に表示した状態で html2pdf(html2canvas+jsPDF) に描画させる。
+   実寸(733px)で実際に表示した状態で html2canvas に描画させる。
    ライブラリ未読込や生成失敗時はブラウザの印刷ダイアログにフォールバック。 */
 function downloadSheetPdf(applicant, type, onDone) {
   const sheet = document.querySelector(".print-sheet");
-  if (!sheet || typeof html2pdf === "undefined") {
+  if (!sheet || typeof html2canvas === "undefined" ||
+      typeof window.jspdf === "undefined" || !window.jspdf.jsPDF) {
     onDone();
     window.print();
     return;
@@ -3043,15 +3045,26 @@ function downloadSheetPdf(applicant, type, onDone) {
   document.body.appendChild(overlay);
   const cleanup = () => { document.body.removeChild(overlay); onDone(); };
   const fname = "適性診断結果_" + (applicant.name || type).replace(/\s+/g, "") + ".pdf";
-  html2pdf().set({
-    margin: [8, 8, 8, 8],
-    filename: fname,
-    image: { type: "jpeg", quality: 0.95 },
+  /* Webフォント読込完了を待ってからキャプチャ（未読込だと行の高さが変わり崩れる） */
+  const fontsReady = (document.fonts && document.fonts.ready) ? document.fonts.ready : Promise.resolve();
+  fontsReady
     /* windowWidth固定: スマホの狭い画面幅で媒体クエリが効いてレイアウトが変わるのを防ぐ */
-    html2canvas: { scale: 2, backgroundColor: "#ffffff", windowWidth: 800, scrollX: 0, scrollY: 0, useCORS: true },
-    jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
-  }).from(clone).save()
-    .then(cleanup)
+    .then(() => html2canvas(clone, {
+      scale: 2, backgroundColor: "#ffffff", windowWidth: 800,
+      scrollX: 0, scrollY: 0, useCORS: true,
+    }))
+    .then(canvas => {
+      /* 自動改ページに任せず、キャンバスをA4一枚に収まるよう縮小配置してPDFを組み立てる。
+         端末のフォント描画で高さが多少変わっても、必ず1ページ・途切れなしになる */
+      const pdf = new window.jspdf.jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
+      const margin = 8, pageW = 210, pageH = 297;
+      const availW = pageW - margin * 2, availH = pageH - margin * 2;
+      const ratio = Math.min(availW / canvas.width, availH / canvas.height);
+      const w = canvas.width * ratio, h = canvas.height * ratio;
+      pdf.addImage(canvas.toDataURL("image/jpeg", 0.95), "JPEG", (pageW - w) / 2, margin, w, h);
+      pdf.save(fname);
+      cleanup();
+    })
     .catch(() => { cleanup(); window.print(); });
 }
 
