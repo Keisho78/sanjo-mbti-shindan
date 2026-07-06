@@ -3016,7 +3016,9 @@ function PrintSheet({ type, profile, chara, cultureFit, deptScores, bestDept, ca
 
 /* --- 画面4: 結果 --- */
 /* 結果シートをA4一枚のPDFとしてダウンロードする（スマホでも動く）。
-   画面外に .print-sheet の複製を可視状態で置き、html2pdf(html2canvas+jsPDF)で描画する。
+   モバイルSafari等では画面外(left:-10000px)に置いた要素のキャプチャが
+   白紙・欠けになるため、「生成中」の白いオーバーレイの上にシートを
+   実寸(733px)で実際に表示した状態で html2pdf(html2canvas+jsPDF) に描画させる。
    ライブラリ未読込や生成失敗時はブラウザの印刷ダイアログにフォールバック。 */
 function downloadSheetPdf(applicant, type, onDone) {
   const sheet = document.querySelector(".print-sheet");
@@ -3025,19 +3027,28 @@ function downloadSheetPdf(applicant, type, onDone) {
     window.print();
     return;
   }
-  const wrap = document.createElement("div");
-  wrap.style.cssText = "position:fixed;left:-10000px;top:0;width:733px;background:#fff;z-index:-1;";
+  const overlay = document.createElement("div");
+  overlay.style.cssText = "position:fixed;inset:0;z-index:99999;background:#fff;overflow:hidden;";
+  const holder = document.createElement("div");
+  holder.style.cssText = "position:absolute;top:0;left:0;width:733px;background:#fff;";
   const clone = sheet.cloneNode(true);
   clone.style.display = "block";
-  wrap.appendChild(clone);
-  document.body.appendChild(wrap);
-  const cleanup = () => { document.body.removeChild(wrap); onDone(); };
+  holder.appendChild(clone);
+  const note = document.createElement("p");
+  note.textContent = "PDFを生成しています…";
+  note.style.cssText = "position:absolute;left:0;right:0;bottom:20px;margin:0;text-align:center;" +
+    "font-size:14px;letter-spacing:0.1em;color:#8a6a48;background:rgba(255,255,255,0.92);padding:10px;";
+  overlay.appendChild(holder);
+  overlay.appendChild(note); // シート(clone)の外に置くのでPDFには写らない
+  document.body.appendChild(overlay);
+  const cleanup = () => { document.body.removeChild(overlay); onDone(); };
   const fname = "適性診断結果_" + (applicant.name || type).replace(/\s+/g, "") + ".pdf";
   html2pdf().set({
     margin: [8, 8, 8, 8],
     filename: fname,
     image: { type: "jpeg", quality: 0.95 },
-    html2canvas: { scale: 2, backgroundColor: "#ffffff" },
+    /* windowWidth固定: スマホの狭い画面幅で媒体クエリが効いてレイアウトが変わるのを防ぐ */
+    html2canvas: { scale: 2, backgroundColor: "#ffffff", windowWidth: 800, scrollX: 0, scrollY: 0, useCORS: true },
     jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
   }).from(clone).save()
     .then(cleanup)
